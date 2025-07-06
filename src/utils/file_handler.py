@@ -2,6 +2,7 @@ import pandas as pd
 from pathlib import Path
 from typing import Union, Optional
 import pyarrow.parquet as pq
+from ..core import FileOperationError, DataValidationError, logger, TimedOperation
 
 
 class FileHandler:
@@ -13,6 +14,8 @@ class FileHandler:
         path = Path(file_path)
         extension = path.suffix.lower()
         
+        logger.debug("detecting_file_type", path=str(path), extension=extension)
+        
         if extension in ['.csv', '.tsv', '.txt']:
             return 'csv'
         elif extension in ['.parquet', '.pq']:
@@ -22,9 +25,11 @@ class FileHandler:
             try:
                 # Try reading as parquet first (binary format)
                 pq.read_schema(str(path))
+                logger.info("file_type_inferred", file_type="parquet", path=str(path))
                 return 'parquet'
-            except:
+            except Exception as e:
                 # Assume CSV if parquet fails
+                logger.info("file_type_inferred", file_type="csv", path=str(path))
                 return 'csv'
     
     @staticmethod
@@ -45,42 +50,78 @@ class FileHandler:
         """
         path = Path(file_path)
         if not path.exists():
-            raise FileNotFoundError(f"File not found: {file_path}")
+            raise FileOperationError(
+                f"File not found: {file_path}",
+                {"file_path": str(file_path)}
+            )
         
-        file_type = FileHandler.detect_file_type(path)
-        
-        if file_type == 'csv':
-            # Common CSV parameters
-            read_kwargs = {
-                'encoding': 'utf-8',
-                'on_bad_lines': 'skip',
-                'low_memory': False
-            }
-            read_kwargs.update(kwargs)
+        with TimedOperation("file_read", file_path=str(path), sample_size=sample_size):
+            file_type = FileHandler.detect_file_type(path)
             
-            if sample_size:
-                read_kwargs['nrows'] = sample_size
+            if file_type == 'csv':
+                # Common CSV parameters
+                read_kwargs = {
+                    'encoding': 'utf-8',
+                    'on_bad_lines': 'skip',
+                    'low_memory': False
+                }
+                read_kwargs.update(kwargs)
                 
-            # Try different separators
-            for sep in [',', '\t', ';', '|']:
-                try:
-                    df = pd.read_csv(path, sep=sep, **read_kwargs)
-                    # Check if we got reasonable columns
-                    if len(df.columns) > 1 or sep == '|':
-                        return df
-                except Exception:
-                    continue
+                if sample_size:
+                    read_kwargs['nrows'] = sample_size
                     
-            # If all separators fail, use comma as default
-            return pd.read_csv(path, **read_kwargs)
-            
-        elif file_type == 'parquet':
-            df = pd.read_parquet(path, **kwargs)
-            if sample_size and len(df) > sample_size:
-                return df.head(sample_size)
-            return df
-        else:
-            raise ValueError(f"Unsupported file type: {file_type}")
+                # Try different separators
+                for sep in [',', '\t', ';', '|']:
+                    try:
+                        df = pd.read_csv(path, sep=sep, **read_kwargs)
+                        # Check if we got reasonable columns
+                        if len(df.columns) > 1 or sep == '|':
+                            logger.info(
+                                "csv_read_success",
+                                separator=sep,
+                                rows=len(df),
+                                columns=len(df.columns)
+                            )
+                            return df
+                    except Exception as e:
+                        logger.debug(
+                            "csv_separator_failed",
+                            separator=sep,
+                            error=str(e)
+                        )
+                        continue
+                        
+                # If all separators fail, use comma as default
+                try:
+                    df = pd.read_csv(path, **read_kwargs)
+                    return df
+                except Exception as e:
+                    raise FileOperationError(
+                        f"Failed to read CSV file: {path}",
+                        {"file_path": str(path), "error": str(e)}
+                    )
+                
+            elif file_type == 'parquet':
+                try:
+                    df = pd.read_parquet(path, **kwargs)
+                    if sample_size and len(df) > sample_size:
+                        df = df.head(sample_size)
+                        logger.info(
+                            "parquet_sampled",
+                            original_rows=len(df),
+                            sample_size=sample_size
+                        )
+                    return df
+                except Exception as e:
+                    raise FileOperationError(
+                        f"Failed to read Parquet file: {path}",
+                        {"file_path": str(path), "error": str(e)}
+                    )
+            else:
+                raise FileOperationError(
+                    f"Unsupported file type: {file_type}",
+                    {"file_type": file_type, "file_path": str(path)}
+                )
     
     @staticmethod
     def save_features(
@@ -96,46 +137,73 @@ class FileHandler:
             format: Output format ('parquet' or 'csv')
         """
         path = Path(output_path)
-        path.parent.mkdir(parents=True, exist_ok=True)
         
-        if format == 'parquet':
-            df.to_parquet(path, index=False)
-        elif format == 'csv':
-            df.to_csv(path, index=False)
-        else:
-            raise ValueError(f"Unsupported output format: {format}")
+        with TimedOperation("file_save", output_path=str(path), format=format):
+            try:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                
+                if format == 'parquet':
+                    df.to_parquet(path, index=False)
+                elif format == 'csv':
+                    df.to_csv(path, index=False)
+                else:
+                    raise DataValidationError(
+                        f"Unsupported output format: {format}",
+                        {"format": format, "supported": ["parquet", "csv"]}
+                    )
+                    
+                logger.info(
+                    "file_saved",
+                    path=str(path),
+                    format=format,
+                    rows=len(df),
+                    columns=len(df.columns),
+                    size_mb=path.stat().st_size / (1024 * 1024)
+                )
+            except Exception as e:
+                raise FileOperationError(
+                    f"Failed to save file: {path}",
+                    {"output_path": str(path), "format": format, "error": str(e)}
+                )
     
     @staticmethod
     def get_file_info(file_path: Union[str, Path]) -> dict:
         """Get basic file information"""
         path = Path(file_path)
         if not path.exists():
-            raise FileNotFoundError(f"File not found: {file_path}")
+            raise FileOperationError(
+                f"File not found: {file_path}",
+                {"file_path": str(file_path)}
+            )
         
-        file_type = FileHandler.detect_file_type(path)
-        file_size_mb = path.stat().st_size / (1024 * 1024)
-        
-        info = {
-            'file_path': str(path),
-            'file_name': path.name,
-            'file_type': file_type,
-            'file_size_mb': file_size_mb
-        }
-        
-        # Try to get row count without loading full file
-        if file_type == 'csv':
-            try:
-                # Count lines (approximation)
-                with open(path, 'r', encoding='utf-8') as f:
-                    row_count = sum(1 for line in f) - 1  # Subtract header
-                info['estimated_rows'] = row_count
-            except:
-                info['estimated_rows'] = None
-        elif file_type == 'parquet':
-            try:
-                parquet_file = pq.ParquetFile(str(path))
-                info['estimated_rows'] = parquet_file.metadata.num_rows
-            except:
-                info['estimated_rows'] = None
-                
-        return info
+        with TimedOperation("file_info", file_path=str(path)) as log:
+            file_type = FileHandler.detect_file_type(path)
+            file_size_mb = path.stat().st_size / (1024 * 1024)
+            
+            info = {
+                'file_path': str(path),
+                'file_name': path.name,
+                'file_type': file_type,
+                'file_size_mb': file_size_mb
+            }
+            
+            # Try to get row count without loading full file
+            if file_type == 'csv':
+                try:
+                    # Count lines (approximation)
+                    with open(path, 'r', encoding='utf-8') as f:
+                        row_count = sum(1 for line in f) - 1  # Subtract header
+                    info['estimated_rows'] = row_count
+                except Exception as e:
+                    log.warning("csv_row_count_failed", error=str(e))
+                    info['estimated_rows'] = None
+            elif file_type == 'parquet':
+                try:
+                    parquet_file = pq.ParquetFile(str(path))
+                    info['estimated_rows'] = parquet_file.metadata.num_rows
+                except Exception as e:
+                    log.warning("parquet_metadata_failed", error=str(e))
+                    info['estimated_rows'] = None
+                    
+            log.info("file_info_retrieved", **info)
+            return info

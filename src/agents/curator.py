@@ -22,6 +22,7 @@ from ..models import (
     MLTaskType,
     PerformanceMode
 )
+from ..core import Config
 
 
 class CuratorDependencies(BaseModel):
@@ -37,7 +38,7 @@ class CuratorDependencies(BaseModel):
 
 
 curator_agent = Agent(
-    "openai:gpt-4o-mini",
+    Config.get_model_string(),
     deps_type=CuratorDependencies,
     system_prompt="""You are the Curator Agent, a feature selection expert.
     Your role is to select the most valuable features while removing redundancy.
@@ -67,206 +68,38 @@ class CuratorAgent:
         """Select and rank features based on importance and redundancy"""
         start_time = time.time()
         
-        # Get all feature names that actually exist in the dataframe
-        all_features = [f.name for f in engineering_result.all_features]
-        existing_features = [f for f in all_features if f in df.columns]
-        feature_df = df[existing_features].copy()
-        
-        # Initialize tracking
-        feature_scores = {}
-        removed_features = []
-        selection_summary = {}
+        # Prepare data and initialize tracking
+        feature_df, feature_scores, removed_features, selection_summary = self._prepare_features(
+            df, engineering_result
+        )
         feature_metadata = self._get_feature_metadata(engineering_result)
         
-        # 1. Variance threshold (remove constant features)
-        variance_features = self._variance_selection(feature_df)
-        removed_by_variance = set(all_features) - set(variance_features)
-        if removed_by_variance:
-            for feat in removed_by_variance:
-                removed_features.append({
-                    'name': feat,
-                    'reason': 'zero_variance',
-                    'score': 0.0
-                })
-            selection_summary['removed_zero_variance'] = len(removed_by_variance)
-            feature_df = feature_df[variance_features]
+        # Remove low variance features
+        feature_df, removed_features = self._apply_variance_filter(
+            feature_df, removed_features, selection_summary
+        )
         
-        # 2. Calculate importance scores if target is provided
+        # Calculate importance scores
         if target is not None and task_type != MLTaskType.UNSUPERVISED:
-            # Evaluate encoding options for categorical features
-            categorical_features = feature_df.select_dtypes(exclude=[np.number]).columns.tolist()
-            if categorical_features and performance_mode != PerformanceMode.FAST:
-                encoding_evaluation = self._evaluate_encoding_options(
-                    feature_df, target, categorical_features, task_type
-                )
-                # Store encoding evaluation results in feature metadata
-                for cat_feat, encodings in encoding_evaluation.items():
-                    if cat_feat in feature_metadata:
-                        feature_metadata[cat_feat]['encoding_scores'] = encodings
-                selection_summary['features_with_encoding_eval'] = len(encoding_evaluation)
-            
-            # Calculate importance for all features (including categorical)
-            all_importance_scores = self._calculate_comprehensive_importance(
-                feature_df, target, task_type, feature_metadata, performance_mode
+            feature_scores = self._calculate_all_importance_scores(
+                feature_df, target, task_type, feature_metadata, performance_mode, selection_summary
             )
-            
-            # Merge scores
-            for feat, scores in all_importance_scores.items():
-                feature_scores[feat] = scores
         
-        # 3. Correlation analysis (only for numeric features)
-        numeric_df = feature_df.select_dtypes(include=[np.number])
-        if not numeric_df.empty:
-            correlation_matrix = numeric_df.corr().abs()
-            correlation_clusters = self._find_correlation_clusters(
-                correlation_matrix,
-                threshold=0.9 if performance_mode == PerformanceMode.FAST else 0.95
-            )
-        else:
-            correlation_matrix = pd.DataFrame()
-            correlation_clusters = []
+        # Remove correlated features
+        features_to_keep, correlation_matrix, correlation_clusters = self._remove_correlated_features(
+            feature_df, feature_scores, performance_mode, removed_features
+        )
         
-        # 4. Remove redundant features from correlation clusters
-        features_to_keep = set(feature_df.columns)
-        for cluster_id, cluster_features in enumerate(correlation_clusters):
-            if len(cluster_features) > 1:
-                # Keep the feature with highest importance score
-                if feature_scores:
-                    cluster_scores = {
-                        feat: np.mean(list(feature_scores.get(feat, {}).values()))
-                        for feat in cluster_features
-                        if feat in feature_scores
-                    }
-                    if cluster_scores:
-                        best_feature = max(cluster_scores, key=cluster_scores.get)
-                    else:
-                        best_feature = cluster_features[0]
-                else:
-                    # If no scores, keep the first one
-                    best_feature = cluster_features[0]
-                
-                # Remove others
-                for feat in cluster_features:
-                    if feat != best_feature:
-                        features_to_keep.discard(feat)
-                        removed_features.append({
-                            'name': feat,
-                            'reason': 'high_correlation',
-                            'correlated_with': best_feature,
-                            'correlation': float(correlation_matrix.loc[feat, best_feature])
-                        })
+        # Create selected features list
+        selected_features = self._create_selected_features_list(
+            features_to_keep, feature_scores, feature_metadata, correlation_clusters, engineering_result
+        )
         
-        selection_summary['removed_correlated'] = len([
-            f for f in removed_features if f.get('reason') == 'high_correlation'
-        ])
-        
-        # 5. Create selected features list
-        selected_features = []
-        for rank, feat in enumerate(features_to_keep):
-            # Calculate combined importance score
-            if feat in feature_scores:
-                # Calculate weighted importance based on score reliability
-                importance = self._calculate_weighted_importance(feature_scores[feat])
-                methods = list(feature_scores[feat].keys())
-            else:
-                # Try to get group-based importance first
-                if feat in feature_metadata:
-                    group = feature_metadata[feat]['group']
-                    group_scores = self._aggregate_group_importance(feature_scores, feature_metadata)
-                    if group in group_scores:
-                        importance = group_scores[group]  # Inherit full group importance
-                        methods = ['group_importance']
-                    else:
-                        # No group score available, use minimal default
-                        importance = 0.1
-                        methods = ['default']
-                else:
-                    # Feature not in metadata, use minimal default
-                    importance = 0.1
-                    methods = ['default']
-            
-            # Find correlation cluster
-            cluster_id = None
-            for idx, cluster in enumerate(correlation_clusters):
-                if feat in cluster:
-                    cluster_id = idx
-                    break
-            
-            # Calculate interpretability score
-            original_features = [f for f in engineering_result.original_features if f.name == feat]
-            if original_features:
-                interpretability = 1.0  # Original features are most interpretable
-            elif 'squared' in feat or 'cubed' in feat:
-                interpretability = 0.7  # Polynomial features
-            elif 'times' in feat or 'over' in feat:
-                interpretability = 0.6  # Interactions
-            elif 'log' in feat or 'sqrt' in feat:
-                interpretability = 0.8  # Simple transforms
-            else:
-                interpretability = 0.5  # Complex features
-            
-            selected_features.append(SelectedFeature(
-                name=feat,
-                importance_score=float(importance),
-                selection_methods=[SelectionMethod(m) for m in methods if m in [e.value for e in SelectionMethod]],
-                rank=rank + 1,
-                correlation_cluster=cluster_id,
-                redundancy_score=0.0,  # Could calculate based on correlation
-                interpretability_score=float(interpretability)
-            ))
-        
-        # Sort by importance
-        selected_features.sort(key=lambda x: x.importance_score, reverse=True)
-        for i, feat in enumerate(selected_features):
-            feat.rank = i + 1
-        
-        # 6. Calculate summary statistics
-        if not correlation_matrix.empty:
-            correlation_summary = {
-                'mean_correlation': float(correlation_matrix.mean().mean()),
-                'max_correlation': float(correlation_matrix[correlation_matrix < 1].max().max()) if (correlation_matrix < 1).any().any() else 0.0,
-                'correlation_clusters': len(correlation_clusters)
-            }
-        else:
-            correlation_summary = {
-                'mean_correlation': 0.0,
-                'max_correlation': 0.0,
-                'correlation_clusters': 0
-            }
-        
-        dimensionality_reduction = {
-            'original_features': len(existing_features),
-            'selected_features': len(selected_features),
-            'reduction_percentage': (1 - len(selected_features) / len(existing_features)) * 100 if existing_features else 0
-        }
-        
-        # 7. Estimate performance impact
-        performance_impact = {
-            'expected_accuracy_retention': min(0.95, 0.85 + len(selected_features) / max(1, len(existing_features)) * 0.1),
-            'training_speedup': len(existing_features) / max(1, len(selected_features)),
-            'interpretability_gain': np.mean([f.interpretability_score for f in selected_features])
-        }
-        
-        # 8. Generate recommendations
-        recommendations = []
-        if len(selected_features) > 50:
-            recommendations.append(f"Consider further reduction - {len(selected_features)} features may still be too many")
-        if dimensionality_reduction['reduction_percentage'] > 80:
-            recommendations.append("Aggressive reduction applied - consider validating with cross-validation")
-        if correlation_summary['max_correlation'] > 0.95:
-            recommendations.append("Some features still highly correlated - consider lower threshold")
-        
-        processing_time = time.time() - start_time
-        
-        return FeatureSelectionResult(
-            selected_features=selected_features,
-            removed_features=removed_features,
-            selection_summary=selection_summary,
-            correlation_matrix_summary=correlation_summary,
-            dimensionality_reduction=dimensionality_reduction,
-            performance_impact_estimate=performance_impact,
-            recommendations=recommendations,
-            processing_time_seconds=processing_time
+        # Calculate summaries and generate result
+        return self._create_final_result(
+            selected_features, removed_features, selection_summary, correlation_matrix,
+            correlation_clusters, len([f.name for f in engineering_result.all_features]),
+            start_time
         )
     
     def _variance_selection(self, df: pd.DataFrame, threshold: float = 0.01) -> List[str]:
@@ -470,109 +303,24 @@ class CuratorAgent:
         numeric_features = X.select_dtypes(include=[np.number]).columns.tolist()
         categorical_features = X.select_dtypes(exclude=[np.number]).columns.tolist()
         
-        # 1. Numeric features - standard methods
+        # Calculate numeric feature importance
         if numeric_features:
-            X_numeric = X[numeric_features].fillna(0)
-            
-            # Mutual information
-            if task_type == MLTaskType.REGRESSION:
-                mi_scores = mutual_info_regression(X_numeric, y, random_state=42)
-            else:
-                mi_scores = mutual_info_classif(X_numeric, y, random_state=42)
-            
-            for feat, score in zip(numeric_features, mi_scores):
-                scores[feat] = {'mutual_information': float(score)}
-            
-            # Random forest importance
-            if performance_mode != PerformanceMode.FAST:
-                if task_type == MLTaskType.REGRESSION:
-                    rf = RandomForestRegressor(n_estimators=50, random_state=42, n_jobs=-1)
-                else:
-                    rf = RandomForestClassifier(n_estimators=50, random_state=42, n_jobs=-1)
-                
-                rf.fit(X_numeric, y)
-                
-                for feat, importance in zip(numeric_features, rf.feature_importances_):
-                    if feat in scores:
-                        scores[feat]['random_forest'] = float(importance)
-                    else:
-                        scores[feat] = {'random_forest': float(importance)}
-                
-                # Permutation importance for top features
-                if performance_mode == PerformanceMode.THOROUGH:
-                    perm_importance = permutation_importance(
-                        rf, X_numeric, y, n_repeats=5, random_state=42, n_jobs=-1
-                    )
-                    for feat, importance in zip(numeric_features, perm_importance.importances_mean):
-                        if feat in scores:
-                            scores[feat]['permutation'] = float(importance)
-                    
-                    # SHAP-based importance (using TreeExplainer for efficiency)
-                    try:
-                        import shap
-                        explainer = shap.TreeExplainer(rf)
-                        shap_values = explainer.shap_values(X_numeric)
-                        
-                        # For multiclass, average across classes
-                        if isinstance(shap_values, list):
-                            shap_importance = np.abs(shap_values).mean(axis=0).mean(axis=0)
-                        else:
-                            shap_importance = np.abs(shap_values).mean(axis=0)
-                        
-                        for feat, importance in zip(numeric_features, shap_importance):
-                            if feat in scores:
-                                scores[feat]['shap'] = float(importance)
-                    except ImportError:
-                        pass  # SHAP not installed
-                    except Exception:
-                        pass  # SHAP calculation failed
+            numeric_scores = self._calculate_numeric_importance(
+                X[numeric_features], y, task_type, performance_mode
+            )
+            scores.update(numeric_scores)
         
-        # 2. Categorical features - specialized methods
+        # Calculate categorical feature importance
         if categorical_features and task_type != MLTaskType.UNSUPERVISED:
-            for feat in categorical_features:
-                cat_scores = self._calculate_categorical_importance(
-                    X[feat], y, task_type
-                )
-                scores[feat] = cat_scores
-        
-        # 3. Calculate interaction importance for top features
-        if performance_mode != PerformanceMode.FAST and len(X.columns) < 50:
-            interaction_scores = self._calculate_interaction_importance(
-                X, y, task_type, scores, top_n=10
+            categorical_scores = self._calculate_categorical_features_importance(
+                X, y, task_type, categorical_features
             )
-            # Add interaction scores to main scores
-            for feat_pair, score in interaction_scores.items():
-                feat1, feat2 = feat_pair
-                if feat1 in scores:
-                    scores[feat1]['interaction_strength'] = max(
-                        scores[feat1].get('interaction_strength', 0), score
-                    )
-                if feat2 in scores:
-                    scores[feat2]['interaction_strength'] = max(
-                        scores[feat2].get('interaction_strength', 0), score
-                    )
+            scores.update(categorical_scores)
         
-        # 4. Calculate feature stability across subsets
-        if performance_mode == PerformanceMode.THOROUGH:
-            stability_scores = self._calculate_feature_stability(
-                X, y, task_type, feature_metadata
-            )
-            for feat, stability in stability_scores.items():
-                if feat in scores:
-                    scores[feat]['stability'] = stability
-        
-        # 5. Group-based importance aggregation
-        group_scores = self._aggregate_group_importance(scores, feature_metadata)
-        
-        # 6. Apply group scores to encoded features without direct scores
-        for feat in X.columns:
-            if feat not in scores and feat in feature_metadata:
-                group = feature_metadata[feat]['group']
-                if group in group_scores:
-                    # Inherit full group score
-                    scores[feat] = {
-                        'group_importance': group_scores[group]
-                    }
+        # Add advanced importance scores
+        scores = self._add_advanced_importance_scores(
+            X, y, task_type, performance_mode, feature_metadata, scores
+        )
         
         return scores
     
@@ -843,3 +591,393 @@ class CuratorAgent:
                     pass
         
         return encoding_scores
+    
+    def _prepare_features(
+        self, df: pd.DataFrame, engineering_result: FeatureEngineeringResult
+    ) -> Tuple[pd.DataFrame, Dict, List, Dict]:
+        """Prepare features and initialize tracking structures"""
+        all_features = [f.name for f in engineering_result.all_features]
+        existing_features = [f for f in all_features if f in df.columns]
+        feature_df = df[existing_features].copy()
+        
+        feature_scores = {}
+        removed_features = []
+        selection_summary = {}
+        
+        return feature_df, feature_scores, removed_features, selection_summary
+    
+    def _apply_variance_filter(
+        self, feature_df: pd.DataFrame, removed_features: List, selection_summary: Dict
+    ) -> Tuple[pd.DataFrame, List]:
+        """Apply variance threshold to remove constant features"""
+        variance_features = self._variance_selection(feature_df)
+        removed_by_variance = set(feature_df.columns) - set(variance_features)
+        
+        if removed_by_variance:
+            for feat in removed_by_variance:
+                removed_features.append({
+                    'name': feat,
+                    'reason': 'zero_variance',
+                    'score': 0.0
+                })
+            selection_summary['removed_zero_variance'] = len(removed_by_variance)
+            feature_df = feature_df[variance_features]
+        
+        return feature_df, removed_features
+    
+    def _calculate_all_importance_scores(
+        self, feature_df: pd.DataFrame, target: pd.Series, task_type: MLTaskType,
+        feature_metadata: Dict, performance_mode: PerformanceMode, selection_summary: Dict
+    ) -> Dict:
+        """Calculate importance scores for all features"""
+        # Evaluate encoding options for categorical features
+        categorical_features = feature_df.select_dtypes(exclude=[np.number]).columns.tolist()
+        if categorical_features and performance_mode != PerformanceMode.FAST:
+            encoding_evaluation = self._evaluate_encoding_options(
+                feature_df, target, categorical_features, task_type
+            )
+            for cat_feat, encodings in encoding_evaluation.items():
+                if cat_feat in feature_metadata:
+                    feature_metadata[cat_feat]['encoding_scores'] = encodings
+            selection_summary['features_with_encoding_eval'] = len(encoding_evaluation)
+        
+        # Calculate comprehensive importance
+        return self._calculate_comprehensive_importance(
+            feature_df, target, task_type, feature_metadata, performance_mode
+        )
+    
+    def _remove_correlated_features(
+        self, feature_df: pd.DataFrame, feature_scores: Dict, performance_mode: PerformanceMode,
+        removed_features: List
+    ) -> Tuple[set, pd.DataFrame, List]:
+        """Remove highly correlated features"""
+        # Correlation analysis (only for numeric features)
+        numeric_df = feature_df.select_dtypes(include=[np.number])
+        if not numeric_df.empty:
+            correlation_matrix = numeric_df.corr().abs()
+            correlation_clusters = self._find_correlation_clusters(
+                correlation_matrix,
+                threshold=0.9 if performance_mode == PerformanceMode.FAST else 0.95
+            )
+        else:
+            correlation_matrix = pd.DataFrame()
+            correlation_clusters = []
+        
+        # Remove redundant features from correlation clusters
+        features_to_keep = set(feature_df.columns)
+        for cluster_features in correlation_clusters:
+            if len(cluster_features) > 1:
+                best_feature = self._select_best_feature_from_cluster(
+                    cluster_features, feature_scores
+                )
+                
+                # Remove others
+                for feat in cluster_features:
+                    if feat != best_feature:
+                        features_to_keep.discard(feat)
+                        removed_features.append({
+                            'name': feat,
+                            'reason': 'high_correlation',
+                            'correlated_with': best_feature,
+                            'correlation': float(correlation_matrix.loc[feat, best_feature])
+                        })
+        
+        return features_to_keep, correlation_matrix, correlation_clusters
+    
+    def _select_best_feature_from_cluster(self, cluster_features: List[str], feature_scores: Dict) -> str:
+        """Select the best feature from a correlation cluster"""
+        if feature_scores:
+            cluster_scores = {
+                feat: np.mean(list(feature_scores.get(feat, {}).values()))
+                for feat in cluster_features
+                if feat in feature_scores
+            }
+            if cluster_scores:
+                return max(cluster_scores, key=cluster_scores.get)
+        return cluster_features[0]
+    
+    def _create_selected_features_list(
+        self, features_to_keep: set, feature_scores: Dict, feature_metadata: Dict,
+        correlation_clusters: List, engineering_result: FeatureEngineeringResult
+    ) -> List[SelectedFeature]:
+        """Create the final list of selected features"""
+        selected_features = []
+        
+        for rank, feat in enumerate(features_to_keep):
+            importance, methods = self._calculate_feature_importance(feat, feature_scores, feature_metadata)
+            cluster_id = self._find_feature_cluster(feat, correlation_clusters)
+            interpretability = self._calculate_interpretability_score(feat, engineering_result)
+            
+            selected_features.append(SelectedFeature(
+                name=feat,
+                importance_score=float(importance),
+                selection_methods=[SelectionMethod(m) for m in methods if m in [e.value for e in SelectionMethod]],
+                rank=rank + 1,
+                correlation_cluster=cluster_id,
+                redundancy_score=0.0,
+                interpretability_score=float(interpretability)
+            ))
+        
+        # Sort by importance and update ranks
+        selected_features.sort(key=lambda x: x.importance_score, reverse=True)
+        for i, feat in enumerate(selected_features):
+            feat.rank = i + 1
+        
+        return selected_features
+    
+    def _calculate_feature_importance(
+        self, feat: str, feature_scores: Dict, feature_metadata: Dict
+    ) -> Tuple[float, List[str]]:
+        """Calculate importance score and methods for a feature"""
+        if feat in feature_scores:
+            importance = self._calculate_weighted_importance(feature_scores[feat])
+            methods = list(feature_scores[feat].keys())
+        else:
+            # Try to get group-based importance
+            if feat in feature_metadata:
+                group = feature_metadata[feat]['group']
+                group_scores = self._aggregate_group_importance(feature_scores, feature_metadata)
+                if group in group_scores:
+                    importance = group_scores[group]
+                    methods = ['group_importance']
+                else:
+                    importance = 0.1
+                    methods = ['default']
+            else:
+                importance = 0.1
+                methods = ['default']
+        
+        return importance, methods
+    
+    def _find_feature_cluster(self, feat: str, correlation_clusters: List) -> Optional[int]:
+        """Find which correlation cluster a feature belongs to"""
+        for idx, cluster in enumerate(correlation_clusters):
+            if feat in cluster:
+                return idx
+        return None
+    
+    def _calculate_interpretability_score(self, feat: str, engineering_result: FeatureEngineeringResult) -> float:
+        """Calculate interpretability score for a feature"""
+        original_features = [f for f in engineering_result.original_features if f.name == feat]
+        if original_features:
+            return 1.0  # Original features are most interpretable
+        elif 'squared' in feat or 'cubed' in feat:
+            return 0.7  # Polynomial features
+        elif 'times' in feat or 'over' in feat:
+            return 0.6  # Interactions
+        elif 'log' in feat or 'sqrt' in feat:
+            return 0.8  # Simple transforms
+        else:
+            return 0.5  # Complex features
+    
+    def _create_final_result(
+        self, selected_features: List[SelectedFeature], removed_features: List,
+        selection_summary: Dict, correlation_matrix: pd.DataFrame, correlation_clusters: List,
+        original_count: int, start_time: float
+    ) -> FeatureSelectionResult:
+        """Create the final feature selection result"""
+        # Calculate correlation summary
+        if not correlation_matrix.empty:
+            correlation_summary = {
+                'mean_correlation': float(correlation_matrix.mean().mean()),
+                'max_correlation': float(correlation_matrix[correlation_matrix < 1].max().max()) 
+                    if (correlation_matrix < 1).any().any() else 0.0,
+                'correlation_clusters': len(correlation_clusters)
+            }
+        else:
+            correlation_summary = {
+                'mean_correlation': 0.0,
+                'max_correlation': 0.0,
+                'correlation_clusters': 0
+            }
+        
+        # Update selection summary
+        selection_summary['removed_correlated'] = len([
+            f for f in removed_features if f.get('reason') == 'high_correlation'
+        ])
+        
+        # Calculate dimensionality reduction
+        dimensionality_reduction = {
+            'original_features': original_count,
+            'selected_features': len(selected_features),
+            'reduction_percentage': (1 - len(selected_features) / original_count) * 100 if original_count else 0
+        }
+        
+        # Estimate performance impact
+        performance_impact = {
+            'expected_accuracy_retention': min(0.95, 0.85 + len(selected_features) / max(1, original_count) * 0.1),
+            'training_speedup': original_count / max(1, len(selected_features)),
+            'interpretability_gain': np.mean([f.interpretability_score for f in selected_features])
+        }
+        
+        # Generate recommendations
+        recommendations = self._generate_recommendations(selected_features, dimensionality_reduction, correlation_summary)
+        
+        processing_time = time.time() - start_time
+        
+        return FeatureSelectionResult(
+            selected_features=selected_features,
+            removed_features=removed_features,
+            selection_summary=selection_summary,
+            correlation_matrix_summary=correlation_summary,
+            dimensionality_reduction=dimensionality_reduction,
+            performance_impact_estimate=performance_impact,
+            recommendations=recommendations,
+            processing_time_seconds=processing_time
+        )
+    
+    def _generate_recommendations(
+        self, selected_features: List, dimensionality_reduction: Dict, correlation_summary: Dict
+    ) -> List[str]:
+        """Generate recommendations based on feature selection results"""
+        recommendations = []
+        
+        if len(selected_features) > 50:
+            recommendations.append(f"Consider further reduction - {len(selected_features)} features may still be too many")
+        if dimensionality_reduction['reduction_percentage'] > 80:
+            recommendations.append("Aggressive reduction applied - consider validating with cross-validation")
+        if correlation_summary['max_correlation'] > 0.95:
+            recommendations.append("Some features still highly correlated - consider lower threshold")
+        
+        return recommendations
+    
+    def _calculate_numeric_importance(
+        self, X_numeric: pd.DataFrame, y: pd.Series, task_type: MLTaskType, 
+        performance_mode: PerformanceMode
+    ) -> Dict[str, Dict[str, float]]:
+        """Calculate importance scores for numeric features"""
+        scores = {}
+        X_filled = X_numeric.fillna(0)
+        
+        # Mutual information
+        if task_type == MLTaskType.REGRESSION:
+            mi_scores = mutual_info_regression(X_filled, y, random_state=42)
+        else:
+            mi_scores = mutual_info_classif(X_filled, y, random_state=42)
+        
+        for feat, score in zip(X_numeric.columns, mi_scores):
+            scores[feat] = {'mutual_information': float(score)}
+        
+        # Random forest importance
+        if performance_mode != PerformanceMode.FAST:
+            rf_scores = self._calculate_rf_importance(X_filled, y, task_type, performance_mode)
+            for feat, rf_score_dict in rf_scores.items():
+                scores[feat].update(rf_score_dict)
+        
+        return scores
+    
+    def _calculate_rf_importance(
+        self, X_numeric: pd.DataFrame, y: pd.Series, task_type: MLTaskType,
+        performance_mode: PerformanceMode
+    ) -> Dict[str, Dict[str, float]]:
+        """Calculate random forest and related importance scores"""
+        rf_scores = {}
+        
+        if task_type == MLTaskType.REGRESSION:
+            rf = RandomForestRegressor(n_estimators=50, random_state=42, n_jobs=-1)
+        else:
+            rf = RandomForestClassifier(n_estimators=50, random_state=42, n_jobs=-1)
+        
+        rf.fit(X_numeric, y)
+        
+        for feat, importance in zip(X_numeric.columns, rf.feature_importances_):
+            rf_scores[feat] = {'random_forest': float(importance)}
+        
+        # Add permutation and SHAP importance for thorough mode
+        if performance_mode == PerformanceMode.THOROUGH:
+            perm_scores = self._calculate_permutation_importance(rf, X_numeric, y)
+            shap_scores = self._calculate_shap_importance(rf, X_numeric)
+            
+            for feat in X_numeric.columns:
+                if feat in perm_scores:
+                    rf_scores[feat]['permutation'] = perm_scores[feat]
+                if feat in shap_scores:
+                    rf_scores[feat]['shap'] = shap_scores[feat]
+        
+        return rf_scores
+    
+    def _calculate_permutation_importance(
+        self, model, X: pd.DataFrame, y: pd.Series
+    ) -> Dict[str, float]:
+        """Calculate permutation importance scores"""
+        try:
+            perm_importance = permutation_importance(
+                model, X, y, n_repeats=5, random_state=42, n_jobs=-1
+            )
+            return {feat: float(importance) for feat, importance 
+                   in zip(X.columns, perm_importance.importances_mean)}
+        except Exception:
+            return {}
+    
+    def _calculate_shap_importance(self, model, X: pd.DataFrame) -> Dict[str, float]:
+        """Calculate SHAP importance scores"""
+        try:
+            import shap
+            explainer = shap.TreeExplainer(model)
+            shap_values = explainer.shap_values(X)
+            
+            # For multiclass, average across classes
+            if isinstance(shap_values, list):
+                shap_importance = np.abs(shap_values).mean(axis=0).mean(axis=0)
+            else:
+                shap_importance = np.abs(shap_values).mean(axis=0)
+            
+            return {feat: float(importance) for feat, importance 
+                   in zip(X.columns, shap_importance)}
+        except (ImportError, Exception):
+            return {}
+    
+    def _calculate_categorical_features_importance(
+        self, X: pd.DataFrame, y: pd.Series, task_type: MLTaskType, 
+        categorical_features: List[str]
+    ) -> Dict[str, Dict[str, float]]:
+        """Calculate importance for all categorical features"""
+        scores = {}
+        for feat in categorical_features:
+            cat_scores = self._calculate_categorical_importance(X[feat], y, task_type)
+            scores[feat] = cat_scores
+        return scores
+    
+    def _add_advanced_importance_scores(
+        self, X: pd.DataFrame, y: pd.Series, task_type: MLTaskType,
+        performance_mode: PerformanceMode, feature_metadata: Dict,
+        scores: Dict[str, Dict[str, float]]
+    ) -> Dict[str, Dict[str, float]]:
+        """Add interaction, stability, and group importance scores"""
+        # Calculate interaction importance for top features
+        if performance_mode != PerformanceMode.FAST and len(X.columns) < 50:
+            interaction_scores = self._calculate_interaction_importance(
+                X, y, task_type, scores, top_n=10
+            )
+            # Add interaction scores to main scores
+            for feat_pair, score in interaction_scores.items():
+                feat1, feat2 = feat_pair
+                if feat1 in scores:
+                    scores[feat1]['interaction_strength'] = max(
+                        scores[feat1].get('interaction_strength', 0), score
+                    )
+                if feat2 in scores:
+                    scores[feat2]['interaction_strength'] = max(
+                        scores[feat2].get('interaction_strength', 0), score
+                    )
+        
+        # Calculate feature stability across subsets
+        if performance_mode == PerformanceMode.THOROUGH:
+            stability_scores = self._calculate_feature_stability(
+                X, y, task_type, feature_metadata
+            )
+            for feat, stability in stability_scores.items():
+                if feat in scores:
+                    scores[feat]['stability'] = stability
+        
+        # Group-based importance aggregation
+        group_scores = self._aggregate_group_importance(scores, feature_metadata)
+        
+        # Apply group scores to encoded features without direct scores
+        for feat in X.columns:
+            if feat not in scores and feat in feature_metadata:
+                group = feature_metadata[feat]['group']
+                if group in group_scores:
+                    scores[feat] = {'group_importance': group_scores[group]}
+        
+        return scores

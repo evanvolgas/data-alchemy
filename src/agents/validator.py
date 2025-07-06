@@ -20,6 +20,7 @@ from ..models import (
     PerformanceMode,
     DataType
 )
+from ..core import Config
 
 
 class ValidatorDependencies(BaseModel):
@@ -36,7 +37,7 @@ class ValidatorDependencies(BaseModel):
 
 
 validator_agent = Agent(
-    "openai:gpt-4o-mini",
+    Config.get_model_string(),
     deps_type=ValidatorDependencies,
     system_prompt="""You are the Validator Agent, a quality assurance expert.
     Your role is to validate feature quality and detect potential issues.
@@ -68,140 +69,19 @@ class ValidatorAgent:
         """Validate feature quality and detect issues"""
         start_time = time.time()
         
-        # Get selected feature names that exist in the dataframe
-        selected_features = [f.name for f in selection_result.selected_features]
-        existing_features = [f for f in selected_features if f in df.columns]
-        feature_df = df[existing_features].copy()
+        # Prepare validation data
+        feature_df, selected_features = self._prepare_validation_data(df, selection_result)
+        validation_state = self._initialize_validation_state()
         
-        # Initialize tracking
-        passed_checks = []
-        failed_checks = []
-        issues = []
-        warnings = []
-        recommendations = []
-        
-        # 1. Data Leakage Check
-        leakage_features = self._check_data_leakage(
-            feature_df, target, selected_features
+        # Run all validation checks
+        validation_state = self._run_validation_checks(
+            df, feature_df, selected_features, target, task_type, 
+            temporal_column, performance_mode, validation_state
         )
-        if leakage_features:
-            failed_checks.append(ValidationCheck.DATA_LEAKAGE)
-            for feat in leakage_features:
-                issues.append(ValidationIssue(
-                    check_type=ValidationCheck.DATA_LEAKAGE,
-                    severity="critical",
-                    feature_names=[feat],
-                    description=f"Feature '{feat}' shows signs of data leakage",
-                    recommendation="Remove this feature or verify it's legitimately available at prediction time",
-                    metrics={'correlation_with_target': 0.99}
-                ))
-        else:
-            passed_checks.append(ValidationCheck.DATA_LEAKAGE)
         
-        # 2. Temporal Consistency Check
-        if temporal_column and temporal_column in df.columns:
-            temporal_issues = self._check_temporal_consistency(
-                df, feature_df, temporal_column, selected_features
-            )
-            if temporal_issues:
-                failed_checks.append(ValidationCheck.TEMPORAL_CONSISTENCY)
-                issues.extend(temporal_issues)
-            else:
-                passed_checks.append(ValidationCheck.TEMPORAL_CONSISTENCY)
-        
-        # 3. Feature Stability Check
-        stability_scores = self._check_feature_stability(
-            feature_df, target, task_type, performance_mode
-        )
-        unstable_features = [
-            feat for feat, score in stability_scores.items() if score < 0.7
-        ]
-        if unstable_features:
-            failed_checks.append(ValidationCheck.FEATURE_STABILITY)
-            issues.append(ValidationIssue(
-                check_type=ValidationCheck.FEATURE_STABILITY,
-                severity="medium",
-                feature_names=unstable_features,
-                description=f"{len(unstable_features)} features show instability across data splits",
-                recommendation="Consider removing unstable features or using regularization",
-                metrics={'unstable_count': len(unstable_features)}
-            ))
-        else:
-            passed_checks.append(ValidationCheck.FEATURE_STABILITY)
-        
-        # 4. Multicollinearity Check
-        multicollinear_groups = self._check_multicollinearity(feature_df)
-        if multicollinear_groups:
-            failed_checks.append(ValidationCheck.MULTICOLLINEARITY)
-            for group in multicollinear_groups:
-                issues.append(ValidationIssue(
-                    check_type=ValidationCheck.MULTICOLLINEARITY,
-                    severity="low",
-                    feature_names=group,
-                    description=f"Features are highly correlated: {', '.join(group)}",
-                    recommendation="Consider removing redundant features from this group",
-                    metrics={'correlation': 0.95}
-                ))
-        else:
-            passed_checks.append(ValidationCheck.MULTICOLLINEARITY)
-        
-        # 5. Cross-validation if target provided
-        cv_results = None
-        if target is not None and task_type != MLTaskType.UNSUPERVISED:
-            cv_results = self._perform_cross_validation(
-                feature_df, target, task_type, performance_mode
-            )
-            if cv_results.std_score > 0.1:
-                warnings.append("High variance in cross-validation scores suggests instability")
-            passed_checks.append(ValidationCheck.CROSS_VALIDATION)
-        
-        # 6. Class Imbalance Check (for classification)
-        if target is not None and task_type in [MLTaskType.CLASSIFICATION, MLTaskType.MULTICLASS]:
-            imbalance_issue = self._check_class_imbalance(target)
-            if imbalance_issue:
-                failed_checks.append(ValidationCheck.CLASS_IMBALANCE)
-                issues.append(imbalance_issue)
-            else:
-                passed_checks.append(ValidationCheck.CLASS_IMBALANCE)
-        
-        # 7. Calculate overall quality score
-        total_checks = len(passed_checks) + len(failed_checks)
-        quality_score = len(passed_checks) / total_checks if total_checks > 0 else 1.0
-        
-        # Adjust for severity of issues
-        critical_issues = [i for i in issues if i.severity == "critical"]
-        if critical_issues:
-            quality_score *= 0.5
-        
-        # 8. Generate recommendations
-        if leakage_features:
-            recommendations.append(f"Critical: Remove {len(leakage_features)} features with data leakage")
-        if unstable_features:
-            recommendations.append(f"Consider removing {len(unstable_features)} unstable features")
-        if quality_score < 0.7:
-            recommendations.append("Feature set needs significant improvement")
-        elif quality_score < 0.9:
-            recommendations.append("Address medium severity issues for better model reliability")
-        else:
-            recommendations.append("Feature set is ready with minor improvements")
-        
-        # Add performance mode recommendations
-        if performance_mode == PerformanceMode.FAST:
-            recommendations.append("Consider running thorough validation for better confidence")
-        
-        processing_time = time.time() - start_time
-        
-        return ValidationResult(
-            passed_checks=passed_checks,
-            failed_checks=failed_checks,
-            issues=issues,
-            cross_validation_results=cv_results,
-            feature_stability_scores=stability_scores,
-            leakage_risk_features=leakage_features,
-            overall_quality_score=float(quality_score),
-            recommendations=recommendations,
-            warnings=warnings,
-            processing_time_seconds=processing_time
+        # Generate final results
+        return self._create_validation_result(
+            validation_state, start_time, performance_mode
         )
     
     def _check_data_leakage(
@@ -463,3 +343,206 @@ class ValidatorAgent:
             feature_importance_stability=importance_stability,
             warnings=warnings
         )
+    
+    def _prepare_validation_data(self, df: pd.DataFrame, selection_result: FeatureSelectionResult) -> Tuple[pd.DataFrame, List[str]]:
+        """Prepare data for validation"""
+        selected_features = [f.name for f in selection_result.selected_features]
+        existing_features = [f for f in selected_features if f in df.columns]
+        feature_df = df[existing_features].copy()
+        return feature_df, selected_features
+    
+    def _initialize_validation_state(self) -> Dict:
+        """Initialize validation state tracking"""
+        return {
+            'passed_checks': [],
+            'failed_checks': [],
+            'issues': [],
+            'warnings': [],
+            'recommendations': [],
+            'leakage_features': [],
+            'stability_scores': {},
+            'cv_results': None
+        }
+    
+    def _run_validation_checks(
+        self, df: pd.DataFrame, feature_df: pd.DataFrame, selected_features: List[str],
+        target: Optional[pd.Series], task_type: MLTaskType, temporal_column: Optional[str],
+        performance_mode: PerformanceMode, validation_state: Dict
+    ) -> Dict:
+        """Run all validation checks and update state"""
+        # Data leakage check
+        self._run_leakage_check(feature_df, target, selected_features, validation_state)
+        
+        # Temporal consistency check
+        if temporal_column and temporal_column in df.columns:
+            self._run_temporal_check(df, feature_df, temporal_column, selected_features, validation_state)
+        
+        # Feature stability check
+        self._run_stability_check(feature_df, target, task_type, performance_mode, validation_state)
+        
+        # Multicollinearity check
+        self._run_multicollinearity_check(feature_df, validation_state)
+        
+        # Cross-validation check
+        if target is not None and task_type != MLTaskType.UNSUPERVISED:
+            self._run_cv_check(feature_df, target, task_type, performance_mode, validation_state)
+        
+        # Class imbalance check
+        if target is not None and task_type in [MLTaskType.CLASSIFICATION, MLTaskType.MULTICLASS]:
+            self._run_imbalance_check(target, validation_state)
+        
+        return validation_state
+    
+    def _run_leakage_check(
+        self, feature_df: pd.DataFrame, target: Optional[pd.Series], 
+        selected_features: List[str], validation_state: Dict
+    ):
+        """Run data leakage check"""
+        leakage_features = self._check_data_leakage(feature_df, target, selected_features)
+        validation_state['leakage_features'] = leakage_features
+        
+        if leakage_features:
+            validation_state['failed_checks'].append(ValidationCheck.DATA_LEAKAGE)
+            for feat in leakage_features:
+                validation_state['issues'].append(ValidationIssue(
+                    check_type=ValidationCheck.DATA_LEAKAGE,
+                    severity="critical",
+                    feature_names=[feat],
+                    description=f"Feature '{feat}' shows signs of data leakage",
+                    recommendation="Remove this feature or verify it's legitimately available at prediction time",
+                    metrics={'correlation_with_target': 0.99}
+                ))
+        else:
+            validation_state['passed_checks'].append(ValidationCheck.DATA_LEAKAGE)
+    
+    def _run_temporal_check(
+        self, df: pd.DataFrame, feature_df: pd.DataFrame, temporal_column: str,
+        selected_features: List[str], validation_state: Dict
+    ):
+        """Run temporal consistency check"""
+        temporal_issues = self._check_temporal_consistency(
+            df, feature_df, temporal_column, selected_features
+        )
+        if temporal_issues:
+            validation_state['failed_checks'].append(ValidationCheck.TEMPORAL_CONSISTENCY)
+            validation_state['issues'].extend(temporal_issues)
+        else:
+            validation_state['passed_checks'].append(ValidationCheck.TEMPORAL_CONSISTENCY)
+    
+    def _run_stability_check(
+        self, feature_df: pd.DataFrame, target: Optional[pd.Series], 
+        task_type: MLTaskType, performance_mode: PerformanceMode, validation_state: Dict
+    ):
+        """Run feature stability check"""
+        stability_scores = self._check_feature_stability(feature_df, target, task_type, performance_mode)
+        validation_state['stability_scores'] = stability_scores
+        
+        unstable_features = [feat for feat, score in stability_scores.items() if score < 0.7]
+        if unstable_features:
+            validation_state['failed_checks'].append(ValidationCheck.FEATURE_STABILITY)
+            validation_state['issues'].append(ValidationIssue(
+                check_type=ValidationCheck.FEATURE_STABILITY,
+                severity="medium",
+                feature_names=unstable_features,
+                description=f"{len(unstable_features)} features show instability across data splits",
+                recommendation="Consider removing unstable features or using regularization",
+                metrics={'unstable_count': len(unstable_features)}
+            ))
+        else:
+            validation_state['passed_checks'].append(ValidationCheck.FEATURE_STABILITY)
+    
+    def _run_multicollinearity_check(self, feature_df: pd.DataFrame, validation_state: Dict):
+        """Run multicollinearity check"""
+        multicollinear_groups = self._check_multicollinearity(feature_df)
+        if multicollinear_groups:
+            validation_state['failed_checks'].append(ValidationCheck.MULTICOLLINEARITY)
+            for group in multicollinear_groups:
+                validation_state['issues'].append(ValidationIssue(
+                    check_type=ValidationCheck.MULTICOLLINEARITY,
+                    severity="low",
+                    feature_names=group,
+                    description=f"Features are highly correlated: {', '.join(group)}",
+                    recommendation="Consider removing redundant features from this group",
+                    metrics={'correlation': 0.95}
+                ))
+        else:
+            validation_state['passed_checks'].append(ValidationCheck.MULTICOLLINEARITY)
+    
+    def _run_cv_check(
+        self, feature_df: pd.DataFrame, target: pd.Series, task_type: MLTaskType,
+        performance_mode: PerformanceMode, validation_state: Dict
+    ):
+        """Run cross-validation check"""
+        cv_results = self._perform_cross_validation(feature_df, target, task_type, performance_mode)
+        validation_state['cv_results'] = cv_results
+        
+        if cv_results.std_score > 0.1:
+            validation_state['warnings'].append("High variance in cross-validation scores suggests instability")
+        validation_state['passed_checks'].append(ValidationCheck.CROSS_VALIDATION)
+    
+    def _run_imbalance_check(self, target: pd.Series, validation_state: Dict):
+        """Run class imbalance check"""
+        imbalance_issue = self._check_class_imbalance(target)
+        if imbalance_issue:
+            validation_state['failed_checks'].append(ValidationCheck.CLASS_IMBALANCE)
+            validation_state['issues'].append(imbalance_issue)
+        else:
+            validation_state['passed_checks'].append(ValidationCheck.CLASS_IMBALANCE)
+    
+    def _create_validation_result(
+        self, validation_state: Dict, start_time: float, performance_mode: PerformanceMode
+    ) -> ValidationResult:
+        """Create final validation result"""
+        # Calculate quality score
+        total_checks = len(validation_state['passed_checks']) + len(validation_state['failed_checks'])
+        quality_score = len(validation_state['passed_checks']) / total_checks if total_checks > 0 else 1.0
+        
+        # Adjust for critical issues
+        critical_issues = [i for i in validation_state['issues'] if i.severity == "critical"]
+        if critical_issues:
+            quality_score *= 0.5
+        
+        # Generate recommendations
+        recommendations = self._generate_validation_recommendations(
+            validation_state, quality_score, performance_mode
+        )
+        
+        processing_time = time.time() - start_time
+        
+        return ValidationResult(
+            passed_checks=validation_state['passed_checks'],
+            failed_checks=validation_state['failed_checks'],
+            issues=validation_state['issues'],
+            cross_validation_results=validation_state['cv_results'],
+            feature_stability_scores=validation_state['stability_scores'],
+            leakage_risk_features=validation_state['leakage_features'],
+            overall_quality_score=float(quality_score),
+            recommendations=recommendations,
+            warnings=validation_state['warnings'],
+            processing_time_seconds=processing_time
+        )
+    
+    def _generate_validation_recommendations(
+        self, validation_state: Dict, quality_score: float, performance_mode: PerformanceMode
+    ) -> List[str]:
+        """Generate validation recommendations"""
+        recommendations = []
+        
+        if validation_state['leakage_features']:
+            recommendations.append(f"Critical: Remove {len(validation_state['leakage_features'])} features with data leakage")
+        
+        unstable_features = [feat for feat, score in validation_state['stability_scores'].items() if score < 0.7]
+        if unstable_features:
+            recommendations.append(f"Consider removing {len(unstable_features)} unstable features")
+        
+        if quality_score < 0.7:
+            recommendations.append("Feature set needs significant improvement")
+        elif quality_score < 0.9:
+            recommendations.append("Address medium severity issues for better model reliability")
+        else:
+            recommendations.append("Feature set is ready with minor improvements")
+        
+        if performance_mode == PerformanceMode.FAST:
+            recommendations.append("Consider running thorough validation for better confidence")
+        
+        return recommendations

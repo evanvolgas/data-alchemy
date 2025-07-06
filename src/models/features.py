@@ -5,20 +5,27 @@ import numpy as np
 
 
 class FeatureType(str, Enum):
+    """Simplified feature types for the system"""
+    # Original features
     ORIGINAL = "original"
-    POLYNOMIAL = "polynomial"
-    RATIO = "ratio"
-    LOG_TRANSFORM = "log_transform"
-    SQRT_TRANSFORM = "sqrt_transform"
-    BINNED = "binned"
-    ONE_HOT = "one_hot"
-    TARGET_ENCODED = "target_encoded"
-    FREQUENCY_ENCODED = "frequency_encoded"
-    DATE_COMPONENT = "date_component"
-    TEXT_LENGTH = "text_length"
-    TEXT_WORD_COUNT = "text_word_count"
+    
+    # Mathematical transformations (consolidated)
+    MATHEMATICAL = "mathematical"
+    
+    # Feature combinations
     INTERACTION = "interaction"
-    AGGREGATED = "aggregated"
+    
+    # Categorical encodings (consolidated)
+    CATEGORICAL = "categorical"
+    
+    # Temporal features (consolidated)
+    TEMPORAL = "temporal"
+    
+    # Text features (consolidated)
+    TEXT = "text"
+    
+    # Generic engineered feature
+    ENGINEERED = "engineered"
 
 
 class Feature(BaseModel):

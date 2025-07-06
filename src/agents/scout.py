@@ -15,6 +15,7 @@ from ..models import (
     MLTaskType,
     PerformanceMode
 )
+from ..core import Config
 
 
 class ScoutDependencies(BaseModel):
@@ -29,7 +30,7 @@ class ScoutDependencies(BaseModel):
 
 
 scout_agent = Agent(
-    "openai:gpt-4o-mini",
+    Config.get_model_string(),
     deps_type=ScoutDependencies,
     system_prompt="""You are the Scout Agent, a data profiling expert.
     Your role is to analyze datasets and provide comprehensive profiling insights.

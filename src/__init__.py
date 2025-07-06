@@ -7,6 +7,12 @@ from .models import (
     SelectionMethod,
     ValidationCheck
 )
+from .core import (
+    DataAlchemyError,
+    TargetNotFoundError,
+    InsufficientDataError,
+    AgentError
+)
 
 __all__ = [
     "DataAlchemy",
@@ -16,5 +22,9 @@ __all__ = [
     "DataType",
     "FeatureType",
     "SelectionMethod",
-    "ValidationCheck"
+    "ValidationCheck",
+    "DataAlchemyError",
+    "TargetNotFoundError",
+    "InsufficientDataError",
+    "AgentError"
 ]

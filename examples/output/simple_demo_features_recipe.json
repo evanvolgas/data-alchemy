@@ -1,254 +1,433 @@
 {
-  "dataset_info": {
-    "total_features_selected": 22,
-    "original_features_selected": 2,
-    "engineered_features_selected": 20,
-    "feature_reduction": "37.1%"
+  "metadata": {
+    "version": "1.0",
+    "created_by": "DataAlchemy",
+    "total_features": 34,
+    "original_features": 5,
+    "engineered_features": 48
   },
-  "original_features": [
-    {
-      "name": "date",
-      "importance": 0.0475,
-      "data_type": "original"
-    },
-    {
-      "name": "category",
-      "importance": 0.0457,
-      "data_type": "original"
-    }
-  ],
-  "engineered_features": [
-    {
-      "name": "feature_1_cubed",
-      "importance": 0.355,
-      "type": "polynomial",
-      "source_columns": [
-        "feature_1"
-      ],
-      "description": "Cube of feature_1",
-      "python_code": "df['feature_1_cubed'] = df['feature_1'] ** 3",
-      "formula": "f(x) = x\u00b3 - captures cubic relationships"
-    },
+  "features": [
     {
       "name": "feature_1_times_feature_2",
-      "importance": 0.2919,
       "type": "interaction",
       "source_columns": [
         "feature_1",
         "feature_2"
       ],
-      "description": "Multiplication interaction between feature_1 and feature_2",
+      "description": "Multiply interaction between feature_1 and feature_2",
       "python_code": "df['feature_1_times_feature_2'] = df['feature_1'] * df['feature_2']",
-      "formula": "f(x,y) = x * y - captures multiplicative effects"
+      "formula": "f(x,y) = x * y",
+      "transformation_type": "interaction",
+      "importance_score": 0.35010939737523833
+    },
+    {
+      "name": "feature_1_sqrt",
+      "type": "mathematical",
+      "source_columns": [
+        "feature_1"
+      ],
+      "description": "sqrt transformation of feature_1",
+      "python_code": "df['feature_1_sqrt'] = np.sqrt(df['feature_1'].clip(lower=0))",
+      "formula": "sqrt(x) for x >= 0",
+      "transformation_type": "sqrt",
+      "importance_score": 0.3456243504692402
+    },
+    {
+      "name": "feature_1_over_feature_3",
+      "type": "interaction",
+      "source_columns": [
+        "feature_1",
+        "feature_3"
+      ],
+      "description": "Divide interaction between feature_1 and feature_3",
+      "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['feature_3']) > 1e-08\ndf['feature_1_over_feature_3'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'feature_1_over_feature_3'] = df.loc[mask, 'feature_1'] / df.loc[mask, 'feature_3']",
+      "formula": "f(x,y) = x / y (safe division)",
+      "transformation_type": "interaction",
+      "importance_score": 0.2231274247484603
     },
     {
       "name": "feature_2_binned",
-      "importance": 0.2128,
-      "type": "binned",
+      "type": "mathematical",
       "source_columns": [
         "feature_2"
       ],
       "description": "feature_2 discretized into 10 bins",
       "python_code": "df['feature_2_binned'] = pd.qcut(df['feature_2'], 10, labels=False, duplicates='drop')",
-      "formula": "Equal-width binning into 10 categories"
+      "formula": "Quantile-based binning into 10 bins",
+      "transformation_type": "binned",
+      "importance_score": 0.21050115135490122
     },
     {
-      "name": "feature_1_over_feature_3",
-      "importance": 0.1827,
-      "type": "ratio",
+      "name": "feature_2_log",
+      "type": "mathematical",
       "source_columns": [
-        "feature_1",
-        "feature_3"
+        "feature_2"
       ],
-      "description": "Ratio of feature_1 to feature_3",
-      "python_code": "df['feature_1_over_feature_3'] = df['feature_1'] / (df['feature_3'] + 1e-8)",
-      "formula": "f(x,y) = x / y - captures proportional relationships"
+      "description": "log transformation of feature_2",
+      "python_code": "df['feature_2_log'] = np.log(df['feature_2'].clip(lower=1e-8))",
+      "formula": "log(x) for x > 0",
+      "transformation_type": "log",
+      "importance_score": 0.19352026463150088
+    },
+    {
+      "name": "feature_2_power_3",
+      "type": "mathematical",
+      "source_columns": [
+        "feature_2"
+      ],
+      "description": "Polynomial degree 3 of feature_2",
+      "python_code": "df['feature_2_power_3'] = df['feature_2'] ** 3",
+      "formula": "f(x) = x^3",
+      "transformation_type": "polynomial",
+      "importance_score": 0.16851339629771156
     },
     {
       "name": "feature_1_times_feature_3",
-      "importance": 0.1691,
       "type": "interaction",
       "source_columns": [
         "feature_1",
         "feature_3"
       ],
-      "description": "Multiplication interaction between feature_1 and feature_3",
+      "description": "Multiply interaction between feature_1 and feature_3",
       "python_code": "df['feature_1_times_feature_3'] = df['feature_1'] * df['feature_3']",
-      "formula": "f(x,y) = x * y - captures multiplicative effects"
+      "formula": "f(x,y) = x * y",
+      "transformation_type": "interaction",
+      "importance_score": 0.16785659934371852
     },
     {
-      "name": "feature_2_cubed",
-      "importance": 0.1689,
-      "type": "polynomial",
+      "name": "feature_1_over_feature_2",
+      "type": "interaction",
+      "source_columns": [
+        "feature_1",
+        "feature_2"
+      ],
+      "description": "Divide interaction between feature_1 and feature_2",
+      "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['feature_2']) > 1e-08\ndf['feature_1_over_feature_2'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'feature_1_over_feature_2'] = df.loc[mask, 'feature_1'] / df.loc[mask, 'feature_2']",
+      "formula": "f(x,y) = x / y (safe division)",
+      "transformation_type": "interaction",
+      "importance_score": 0.15617103734593885
+    },
+    {
+      "name": "feature_2_exp",
+      "type": "mathematical",
       "source_columns": [
         "feature_2"
       ],
-      "description": "Cube of feature_2",
-      "python_code": "df['feature_2_cubed'] = df['feature_2'] ** 3",
-      "formula": "f(x) = x\u00b3 - captures cubic relationships"
+      "description": "exp transformation of feature_2",
+      "python_code": "df['feature_2_exp'] = np.exp(df['feature_2'].clip(upper=10.0))",
+      "formula": "exp(x)",
+      "transformation_type": "exponential",
+      "importance_score": 0.14716175036897083
     },
     {
       "name": "feature_2_times_feature_3",
-      "importance": 0.134,
       "type": "interaction",
       "source_columns": [
         "feature_2",
         "feature_3"
       ],
-      "description": "Multiplication interaction between feature_2 and feature_3",
+      "description": "Multiply interaction between feature_2 and feature_3",
       "python_code": "df['feature_2_times_feature_3'] = df['feature_2'] * df['feature_3']",
-      "formula": "f(x,y) = x * y - captures multiplicative effects"
+      "formula": "f(x,y) = x * y",
+      "transformation_type": "interaction",
+      "importance_score": 0.1323840428625257
     },
     {
-      "name": "feature_3_squared",
-      "importance": 0.115,
-      "type": "polynomial",
+      "name": "feature_1_sin",
+      "type": "mathematical",
+      "source_columns": [
+        "feature_1"
+      ],
+      "description": "sin transformation of feature_1",
+      "python_code": "df['feature_1_sin'] = np.sin(df['feature_1'])",
+      "formula": "sin(x)",
+      "transformation_type": "trigonometric",
+      "importance_score": 0.12949387736010934
+    },
+    {
+      "name": "feature_2_sin",
+      "type": "mathematical",
+      "source_columns": [
+        "feature_2"
+      ],
+      "description": "sin transformation of feature_2",
+      "python_code": "df['feature_2_sin'] = np.sin(df['feature_2'])",
+      "formula": "sin(x)",
+      "transformation_type": "trigonometric",
+      "importance_score": 0.12491593620568484
+    },
+    {
+      "name": "feature_3_power_2",
+      "type": "mathematical",
       "source_columns": [
         "feature_3"
       ],
-      "description": "Square of feature_3",
-      "python_code": "df['feature_3_squared'] = df['feature_3'] ** 2",
-      "formula": "f(x) = x\u00b2 - captures quadratic relationships"
+      "description": "Polynomial degree 2 of feature_3",
+      "python_code": "df['feature_3_power_2'] = df['feature_3'] ** 2",
+      "formula": "f(x) = x^2",
+      "transformation_type": "polynomial",
+      "importance_score": 0.1136228177702351
+    },
+    {
+      "name": "feature_3_sin",
+      "type": "mathematical",
+      "source_columns": [
+        "feature_3"
+      ],
+      "description": "sin transformation of feature_3",
+      "python_code": "df['feature_3_sin'] = np.sin(df['feature_3'])",
+      "formula": "sin(x)",
+      "transformation_type": "trigonometric",
+      "importance_score": 0.10507311823256132
     },
     {
       "name": "date_month_cos",
-      "importance": 0.1036,
-      "type": "date_component",
+      "type": "temporal",
       "source_columns": [
         "date"
       ],
-      "description": "Cosine encoding of month",
+      "description": "month_cos component of date",
       "python_code": "df['date_month_cos'] = np.cos(2 * np.pi * pd.to_datetime(df['date']).dt.month / 12)",
-      "formula": "cos(2\u03c0 * month / 12) - captures cyclical nature"
+      "formula": "cos(2π * month / 12)",
+      "transformation_type": "temporal_cyclical",
+      "importance_score": 0.10260395328008992
     },
     {
       "name": "date_month",
-      "importance": 0.1008,
-      "type": "date_component",
+      "type": "engineered",
       "source_columns": [
         "date"
       ],
-      "description": "Month component (1-12)",
+      "description": "month component of date",
       "python_code": "df['date_month'] = pd.to_datetime(df['date']).dt.month",
-      "formula": "Extracts month as integer"
+      "formula": "Extract month (1-12)",
+      "transformation_type": "temporal_component",
+      "importance_score": 0.10003238054209804
     },
     {
-      "name": "date_day",
-      "importance": 0.0987,
-      "type": "date_component",
+      "name": "feature_3_cos",
+      "type": "mathematical",
+      "source_columns": [
+        "feature_3"
+      ],
+      "description": "cos transformation of feature_3",
+      "python_code": "df['feature_3_cos'] = np.cos(df['feature_3'])",
+      "formula": "cos(x)",
+      "transformation_type": "trigonometric",
+      "importance_score": 0.09734222411418776
+    },
+    {
+      "name": "date_day_cos",
+      "type": "temporal",
       "source_columns": [
         "date"
       ],
-      "description": "Day of month (1-31)",
-      "python_code": "df['date_day'] = pd.to_datetime(df['date']).dt.day",
-      "formula": "Extracts day as integer"
-    },
-    {
-      "name": "date_year",
-      "importance": 0.0983,
-      "type": "date_component",
-      "source_columns": [
-        "date"
-      ],
-      "description": "Year component",
-      "python_code": "df['date_year'] = pd.to_datetime(df['date']).dt.year",
-      "formula": "Extracts year as integer"
+      "description": "day_cos component of date",
+      "python_code": "df['date_day_cos'] = np.cos(2 * np.pi * pd.to_datetime(df['date']).dt.day / 31)",
+      "formula": "cos(2π * day / 31)",
+      "transformation_type": "temporal_cyclical",
+      "importance_score": 0.09547540893947616
     },
     {
       "name": "date_month_sin",
-      "importance": 0.0965,
-      "type": "date_component",
+      "type": "temporal",
       "source_columns": [
         "date"
       ],
-      "description": "Sine encoding of month",
+      "description": "month_sin component of date",
       "python_code": "df['date_month_sin'] = np.sin(2 * np.pi * pd.to_datetime(df['date']).dt.month / 12)",
-      "formula": "sin(2\u03c0 * month / 12) - captures cyclical nature"
+      "formula": "sin(2π * month / 12)",
+      "transformation_type": "temporal_cyclical",
+      "importance_score": 0.09513516856907535
     },
     {
       "name": "category_is_A",
-      "importance": 0.0959,
-      "type": "one_hot",
+      "type": "categorical",
       "source_columns": [
         "category"
       ],
       "description": "Binary indicator for category==A",
       "python_code": "df['category_is_A'] = (df['category'] == 'A').astype(int)",
-      "formula": "1 if category matches, 0 otherwise"
+      "formula": "1 if value matches, 0 otherwise",
+      "transformation_type": "one_hot",
+      "importance_score": 0.09504227719534748
+    },
+    {
+      "name": "date_day",
+      "type": "engineered",
+      "source_columns": [
+        "date"
+      ],
+      "description": "day component of date",
+      "python_code": "df['date_day'] = pd.to_datetime(df['date']).dt.day",
+      "formula": "Extract day of month (1-31)",
+      "transformation_type": "temporal_component",
+      "importance_score": 0.09487094904248645
     },
     {
       "name": "category_is_B",
-      "importance": 0.094,
-      "type": "one_hot",
+      "type": "categorical",
       "source_columns": [
         "category"
       ],
       "description": "Binary indicator for category==B",
       "python_code": "df['category_is_B'] = (df['category'] == 'B').astype(int)",
-      "formula": "1 if category matches, 0 otherwise"
+      "formula": "1 if value matches, 0 otherwise",
+      "transformation_type": "one_hot",
+      "importance_score": 0.09335360726586968
     },
     {
-      "name": "date_dayofweek",
-      "importance": 0.0826,
-      "type": "date_component",
+      "name": "date_year",
+      "type": "engineered",
       "source_columns": [
         "date"
       ],
-      "description": "Day of week (0=Monday)",
-      "python_code": "df['date_dayofweek'] = pd.to_datetime(df['date']).dt.dayofweek",
-      "formula": "Extracts day of week"
+      "description": "year component of date",
+      "python_code": "df['date_year'] = pd.to_datetime(df['date']).dt.year",
+      "formula": "Extract year",
+      "transformation_type": "temporal_component",
+      "importance_score": 0.09093799663959604
+    },
+    {
+      "name": "feature_1_exp",
+      "type": "mathematical",
+      "source_columns": [
+        "feature_1"
+      ],
+      "description": "exp transformation of feature_1",
+      "python_code": "df['feature_1_exp'] = np.exp(df['feature_1'].clip(upper=10.0))",
+      "formula": "exp(x)",
+      "transformation_type": "exponential",
+      "importance_score": 0.0836259986573508
     },
     {
       "name": "category_is_C",
-      "importance": 0.0809,
-      "type": "one_hot",
+      "type": "categorical",
       "source_columns": [
         "category"
       ],
       "description": "Binary indicator for category==C",
       "python_code": "df['category_is_C'] = (df['category'] == 'C').astype(int)",
-      "formula": "1 if category matches, 0 otherwise"
+      "formula": "1 if value matches, 0 otherwise",
+      "transformation_type": "one_hot",
+      "importance_score": 0.08198813301556938
+    },
+    {
+      "name": "date_dayofweek",
+      "type": "engineered",
+      "source_columns": [
+        "date"
+      ],
+      "description": "dayofweek component of date",
+      "python_code": "df['date_dayofweek'] = pd.to_datetime(df['date']).dt.dayofweek",
+      "formula": "Extract day of week (0=Monday)",
+      "transformation_type": "temporal_component",
+      "importance_score": 0.0786709334280285
+    },
+    {
+      "name": "feature_2_cos",
+      "type": "mathematical",
+      "source_columns": [
+        "feature_2"
+      ],
+      "description": "cos transformation of feature_2",
+      "python_code": "df['feature_2_cos'] = np.cos(df['feature_2'])",
+      "formula": "cos(x)",
+      "transformation_type": "trigonometric",
+      "importance_score": 0.07658909194569205
+    },
+    {
+      "name": "feature_1_cos",
+      "type": "mathematical",
+      "source_columns": [
+        "feature_1"
+      ],
+      "description": "cos transformation of feature_1",
+      "python_code": "df['feature_1_cos'] = np.cos(df['feature_1'])",
+      "formula": "cos(x)",
+      "transformation_type": "trigonometric",
+      "importance_score": 0.06693564482362567
+    },
+    {
+      "name": "date_day_sin",
+      "type": "temporal",
+      "source_columns": [
+        "date"
+      ],
+      "description": "day_sin component of date",
+      "python_code": "df['date_day_sin'] = np.sin(2 * np.pi * pd.to_datetime(df['date']).dt.day / 31)",
+      "formula": "sin(2π * day / 31)",
+      "transformation_type": "temporal_cyclical",
+      "importance_score": 0.0638941194571742
     },
     {
       "name": "category_is_D",
-      "importance": 0.0657,
-      "type": "one_hot",
+      "type": "categorical",
       "source_columns": [
         "category"
       ],
       "description": "Binary indicator for category==D",
       "python_code": "df['category_is_D'] = (df['category'] == 'D').astype(int)",
-      "formula": "1 if category matches, 0 otherwise"
+      "formula": "1 if value matches, 0 otherwise",
+      "transformation_type": "one_hot",
+      "importance_score": 0.06370276256498399
+    },
+    {
+      "name": "feature_2_reciprocal",
+      "type": "mathematical",
+      "source_columns": [
+        "feature_2"
+      ],
+      "description": "reciprocal transformation of feature_2",
+      "python_code": "df['feature_2_reciprocal'] = 1.0 / (df['feature_2'] + 1e-08)",
+      "formula": "1 / (x + ε)",
+      "transformation_type": "reciprocal",
+      "importance_score": 0.0634580833209399
     },
     {
       "name": "category_frequency",
-      "importance": 0.0641,
-      "type": "frequency_encoded",
+      "type": "categorical",
       "source_columns": [
         "category"
       ],
       "description": "Frequency encoding of category",
       "python_code": "freq_map = df['category'].value_counts().to_dict()\ndf['category_frequency'] = df['category'].map(freq_map)",
-      "formula": "Maps each category to its occurrence frequency"
+      "formula": "Count of each category value",
+      "transformation_type": "frequency_encoded",
+      "importance_score": 0.06335336321770685
+    },
+    {
+      "name": "feature_3_exp",
+      "type": "mathematical",
+      "source_columns": [
+        "feature_3"
+      ],
+      "description": "exp transformation of feature_3",
+      "python_code": "df['feature_3_exp'] = np.exp(df['feature_3'].clip(upper=10.0))",
+      "formula": "exp(x)",
+      "transformation_type": "exponential",
+      "importance_score": 0.06261956554340214
     },
     {
       "name": "date_is_weekend",
-      "importance": 0.0624,
-      "type": "date_component",
+      "type": "engineered",
       "source_columns": [
         "date"
       ],
-      "description": "Binary indicator for weekend",
+      "description": "is_weekend component of date",
       "python_code": "df['date_is_weekend'] = pd.to_datetime(df['date']).dt.dayofweek.isin([5, 6]).astype(int)",
-      "formula": "1 if Saturday/Sunday, 0 otherwise"
+      "formula": "1 if Saturday/Sunday, 0 otherwise",
+      "transformation_type": "temporal_component",
+      "importance_score": 0.062152596068989284
     }
   ],
-  "usage_instructions": {
-    "description": "To recreate these features, use the Python code provided for each engineered feature.",
-    "required_imports": [
-      "import pandas as pd",
-      "import numpy as np"
-    ],
-    "example": "df[feature_name] = <python_code_from_recipe>"
+  "instructions": {
+    "description": "This recipe contains the code to recreate the selected features",
+    "usage": "Apply the python_code for each feature in the order listed",
+    "requirements": [
+      "pandas",
+      "numpy",
+      "scikit-learn"
+    ]
   }
 }

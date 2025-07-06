@@ -1,354 +1,622 @@
 {
-  "dataset_info": {
-    "total_features_selected": 32,
-    "original_features_selected": 4,
-    "engineered_features_selected": 28,
-    "feature_reduction": "43.9%"
+  "metadata": {
+    "version": "1.0",
+    "created_by": "DataAlchemy",
+    "total_features": 49,
+    "original_features": 10,
+    "engineered_features": 85
   },
-  "original_features": [
-    {
-      "name": "product_category",
-      "importance": 0.3171,
-      "data_type": "original"
-    },
-    {
-      "name": "is_rainy",
-      "importance": 0.12,
-      "data_type": "original"
-    },
-    {
-      "name": "store_type",
-      "importance": 0.0359,
-      "data_type": "original"
-    },
-    {
-      "name": "date",
-      "importance": 0.0197,
-      "data_type": "original"
-    }
-  ],
-  "engineered_features": [
+  "features": [
     {
       "name": "price_over_competitor_price_ratio",
-      "importance": 0.5828,
-      "type": "ratio",
+      "type": "interaction",
       "source_columns": [
         "price",
         "competitor_price_ratio"
       ],
-      "description": "Ratio of price to competitor_price_ratio",
-      "python_code": "df['price_over_competitor_price_ratio'] = df['price'] / (df['competitor_price_ratio'] + 1e-8)",
-      "formula": "f(x,y) = x / y - captures proportional relationships"
+      "description": "Divide interaction between price and competitor_price_ratio",
+      "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['competitor_price_ratio']) > 1e-08\ndf['price_over_competitor_price_ratio'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'price_over_competitor_price_ratio'] = df.loc[mask, 'price'] / df.loc[mask, 'competitor_price_ratio']",
+      "formula": "f(x,y) = x / y (safe division)",
+      "transformation_type": "interaction",
+      "importance_score": 0.5637223775824539
     },
     {
-      "name": "store_id_times_price",
-      "importance": 0.2728,
+      "name": "price_over_temperature",
       "type": "interaction",
       "source_columns": [
-        "store_id",
-        "price"
+        "price",
+        "temperature"
       ],
-      "description": "Multiplication interaction between store_id and price",
-      "python_code": "df['store_id_times_price'] = df['store_id'] * df['price']",
-      "formula": "f(x,y) = x * y - captures multiplicative effects"
+      "description": "Divide interaction between price and temperature",
+      "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['temperature']) > 1e-08\ndf['price_over_temperature'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'price_over_temperature'] = df.loc[mask, 'price'] / df.loc[mask, 'temperature']",
+      "formula": "f(x,y) = x / y (safe division)",
+      "transformation_type": "interaction",
+      "importance_score": 0.3265889146763947
     },
     {
       "name": "product_category_is_Electronics",
-      "importance": 0.2728,
-      "type": "one_hot",
+      "type": "categorical",
       "source_columns": [
         "product_category"
       ],
       "description": "Binary indicator for product_category==Electronics",
       "python_code": "df['product_category_is_Electronics'] = (df['product_category'] == 'Electronics').astype(int)",
-      "formula": "1 if category matches, 0 otherwise"
+      "formula": "1 if value matches, 0 otherwise",
+      "transformation_type": "one_hot",
+      "importance_score": 0.2845359850173795
     },
     {
       "name": "product_category_frequency",
-      "importance": 0.2711,
-      "type": "frequency_encoded",
+      "type": "categorical",
       "source_columns": [
         "product_category"
       ],
       "description": "Frequency encoding of product_category",
       "python_code": "freq_map = df['product_category'].value_counts().to_dict()\ndf['product_category_frequency'] = df['product_category'].map(freq_map)",
-      "formula": "Maps each category to its occurrence frequency"
+      "formula": "Count of each category value",
+      "transformation_type": "frequency_encoded",
+      "importance_score": 0.27430636303096184
     },
     {
-      "name": "store_id_over_price",
-      "importance": 0.2605,
-      "type": "ratio",
+      "name": "store_id_times_price",
+      "type": "interaction",
       "source_columns": [
         "store_id",
         "price"
       ],
-      "description": "Ratio of store_id to price",
-      "python_code": "df['store_id_over_price'] = df['store_id'] / (df['price'] + 1e-8)",
-      "formula": "f(x,y) = x / y - captures proportional relationships"
+      "description": "Multiply interaction between store_id and price",
+      "python_code": "df['store_id_times_price'] = df['store_id'] * df['price']",
+      "formula": "f(x,y) = x * y",
+      "transformation_type": "interaction",
+      "importance_score": 0.2706257316793505
+    },
+    {
+      "name": "store_id_over_price",
+      "type": "interaction",
+      "source_columns": [
+        "store_id",
+        "price"
+      ],
+      "description": "Divide interaction between store_id and price",
+      "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['price']) > 1e-08\ndf['store_id_over_price'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'store_id_over_price'] = df.loc[mask, 'store_id'] / df.loc[mask, 'price']",
+      "formula": "f(x,y) = x / y (safe division)",
+      "transformation_type": "interaction",
+      "importance_score": 0.2578663114788377
+    },
+    {
+      "name": "price_times_temperature",
+      "type": "interaction",
+      "source_columns": [
+        "price",
+        "temperature"
+      ],
+      "description": "Multiply interaction between price and temperature",
+      "python_code": "df['price_times_temperature'] = df['price'] * df['temperature']",
+      "formula": "f(x,y) = x * y",
+      "transformation_type": "interaction",
+      "importance_score": 0.25072749625059004
     },
     {
       "name": "product_category_is_Food",
-      "importance": 0.2574,
-      "type": "one_hot",
+      "type": "categorical",
       "source_columns": [
         "product_category"
       ],
       "description": "Binary indicator for product_category==Food",
       "python_code": "df['product_category_is_Food'] = (df['product_category'] == 'Food').astype(int)",
-      "formula": "1 if category matches, 0 otherwise"
+      "formula": "1 if value matches, 0 otherwise",
+      "transformation_type": "one_hot",
+      "importance_score": 0.24826025948264452
     },
     {
-      "name": "price_times_discount_percentage",
-      "importance": 0.1968,
+      "name": "price_over_discount_percentage",
       "type": "interaction",
       "source_columns": [
         "price",
         "discount_percentage"
       ],
-      "description": "Multiplication interaction between price and discount_percentage",
-      "python_code": "df['price_times_discount_percentage'] = df['price'] * df['discount_percentage']",
-      "formula": "f(x,y) = x * y - captures multiplicative effects"
+      "description": "Divide interaction between price and discount_percentage",
+      "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['discount_percentage']) > 1e-08\ndf['price_over_discount_percentage'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'price_over_discount_percentage'] = df.loc[mask, 'price'] / df.loc[mask, 'discount_percentage']",
+      "formula": "f(x,y) = x / y (safe division)",
+      "transformation_type": "interaction",
+      "importance_score": 0.2003928552592811
     },
     {
-      "name": "discount_percentage_sqrt",
-      "importance": 0.1889,
-      "type": "sqrt_transform",
+      "name": "price_times_discount_percentage",
+      "type": "interaction",
       "source_columns": [
+        "price",
         "discount_percentage"
       ],
-      "description": "Square root transform of discount_percentage",
-      "python_code": "df['discount_percentage_sqrt'] = np.sqrt(df['discount_percentage'].fillna(0))",
-      "formula": "f(x) = \u221ax - mild variance stabilization"
+      "description": "Multiply interaction between price and discount_percentage",
+      "python_code": "df['price_times_discount_percentage'] = df['price'] * df['discount_percentage']",
+      "formula": "f(x,y) = x * y",
+      "transformation_type": "interaction",
+      "importance_score": 0.18924604226595812
+    },
+    {
+      "name": "discount_percentage_times_temperature",
+      "type": "interaction",
+      "source_columns": [
+        "discount_percentage",
+        "temperature"
+      ],
+      "description": "Multiply interaction between discount_percentage and temperature",
+      "python_code": "df['discount_percentage_times_temperature'] = df['discount_percentage'] * df['temperature']",
+      "formula": "f(x,y) = x * y",
+      "transformation_type": "interaction",
+      "importance_score": 0.18501754756910654
     },
     {
       "name": "product_category_is_Home",
-      "importance": 0.1793,
-      "type": "one_hot",
+      "type": "categorical",
       "source_columns": [
         "product_category"
       ],
       "description": "Binary indicator for product_category==Home",
       "python_code": "df['product_category_is_Home'] = (df['product_category'] == 'Home').astype(int)",
-      "formula": "1 if category matches, 0 otherwise"
+      "formula": "1 if value matches, 0 otherwise",
+      "transformation_type": "one_hot",
+      "importance_score": 0.1765401218102211
+    },
+    {
+      "name": "price_exp",
+      "type": "mathematical",
+      "source_columns": [
+        "price"
+      ],
+      "description": "exp transformation of price",
+      "python_code": "df['price_exp'] = np.exp(df['price'].clip(upper=10.0))",
+      "formula": "exp(x)",
+      "transformation_type": "exponential",
+      "importance_score": 0.17403668601508374
     },
     {
       "name": "store_id_times_discount_percentage",
-      "importance": 0.177,
       "type": "interaction",
       "source_columns": [
         "store_id",
         "discount_percentage"
       ],
-      "description": "Multiplication interaction between store_id and discount_percentage",
+      "description": "Multiply interaction between store_id and discount_percentage",
       "python_code": "df['store_id_times_discount_percentage'] = df['store_id'] * df['discount_percentage']",
-      "formula": "f(x,y) = x * y - captures multiplicative effects"
+      "formula": "f(x,y) = x * y",
+      "transformation_type": "interaction",
+      "importance_score": 0.17349114983402145
     },
     {
-      "name": "discount_percentage_binned",
-      "importance": 0.1586,
-      "type": "binned",
+      "name": "discount_percentage_log",
+      "type": "mathematical",
       "source_columns": [
         "discount_percentage"
       ],
-      "description": "discount_percentage discretized into 10 bins",
-      "python_code": "df['discount_percentage_binned'] = pd.qcut(df['discount_percentage'], 10, labels=False, duplicates='drop')",
-      "formula": "Equal-width binning into 10 categories"
+      "description": "log transformation of discount_percentage",
+      "python_code": "df['discount_percentage_log'] = np.log(df['discount_percentage'].clip(lower=1e-8))",
+      "formula": "log(x) for x > 0",
+      "transformation_type": "log",
+      "importance_score": 0.1662301776902279
     },
     {
-      "name": "store_id_sqrt",
-      "importance": 0.1517,
-      "type": "sqrt_transform",
+      "name": "store_id_log",
+      "type": "mathematical",
       "source_columns": [
         "store_id"
       ],
-      "description": "Square root transform of store_id",
-      "python_code": "df['store_id_sqrt'] = np.sqrt(df['store_id'].fillna(0))",
-      "formula": "f(x) = \u221ax - mild variance stabilization"
+      "description": "log transformation of store_id",
+      "python_code": "df['store_id_log'] = np.log(df['store_id'].clip(lower=1e-8))",
+      "formula": "log(x) for x > 0",
+      "transformation_type": "log",
+      "importance_score": 0.15785507398444745
+    },
+    {
+      "name": "store_id_reciprocal",
+      "type": "mathematical",
+      "source_columns": [
+        "store_id"
+      ],
+      "description": "reciprocal transformation of store_id",
+      "python_code": "df['store_id_reciprocal'] = 1.0 / (df['store_id'] + 1e-08)",
+      "formula": "1 / (x + ε)",
+      "transformation_type": "reciprocal",
+      "importance_score": 0.1564560900600703
     },
     {
       "name": "date_dayofweek",
-      "importance": 0.1493,
-      "type": "date_component",
+      "type": "engineered",
       "source_columns": [
         "date"
       ],
-      "description": "Day of week (0=Monday)",
+      "description": "dayofweek component of date",
       "python_code": "df['date_dayofweek'] = pd.to_datetime(df['date']).dt.dayofweek",
-      "formula": "Extracts day of week"
-    },
-    {
-      "name": "store_type_is_C",
-      "importance": 0.149,
-      "type": "one_hot",
-      "source_columns": [
-        "store_type"
-      ],
-      "description": "Binary indicator for store_type==C",
-      "python_code": "df['store_type_is_C'] = (df['store_type'] == 'C').astype(int)",
-      "formula": "1 if category matches, 0 otherwise"
-    },
-    {
-      "name": "date_year",
-      "importance": 0.1463,
-      "type": "date_component",
-      "source_columns": [
-        "date"
-      ],
-      "description": "Year component",
-      "python_code": "df['date_year'] = pd.to_datetime(df['date']).dt.year",
-      "formula": "Extracts year as integer"
+      "formula": "Extract day of week (0=Monday)",
+      "transformation_type": "temporal_component",
+      "importance_score": 0.1538493822390262
     },
     {
       "name": "product_category_is_Sports",
-      "importance": 0.1455,
-      "type": "one_hot",
+      "type": "categorical",
       "source_columns": [
         "product_category"
       ],
       "description": "Binary indicator for product_category==Sports",
       "python_code": "df['product_category_is_Sports'] = (df['product_category'] == 'Sports').astype(int)",
-      "formula": "1 if category matches, 0 otherwise"
+      "formula": "1 if value matches, 0 otherwise",
+      "transformation_type": "one_hot",
+      "importance_score": 0.14751374687747706
     },
     {
-      "name": "temperature_cubed",
-      "importance": 0.1423,
-      "type": "polynomial",
+      "name": "discount_percentage_binned",
+      "type": "mathematical",
+      "source_columns": [
+        "discount_percentage"
+      ],
+      "description": "discount_percentage discretized into 10 bins",
+      "python_code": "df['discount_percentage_binned'] = pd.qcut(df['discount_percentage'], 10, labels=False, duplicates='drop')",
+      "formula": "Quantile-based binning into 10 bins",
+      "transformation_type": "binned",
+      "importance_score": 0.1469241419789078
+    },
+    {
+      "name": "store_id_cos",
+      "type": "mathematical",
+      "source_columns": [
+        "store_id"
+      ],
+      "description": "cos transformation of store_id",
+      "python_code": "df['store_id_cos'] = np.cos(df['store_id'])",
+      "formula": "cos(x)",
+      "transformation_type": "trigonometric",
+      "importance_score": 0.14610204156524295
+    },
+    {
+      "name": "temperature_power_3",
+      "type": "mathematical",
       "source_columns": [
         "temperature"
       ],
-      "description": "Cube of temperature",
-      "python_code": "df['temperature_cubed'] = df['temperature'] ** 3",
-      "formula": "f(x) = x\u00b3 - captures cubic relationships"
+      "description": "Polynomial degree 3 of temperature",
+      "python_code": "df['temperature_power_3'] = df['temperature'] ** 3",
+      "formula": "f(x) = x^3",
+      "transformation_type": "polynomial",
+      "importance_score": 0.1444373824876387
+    },
+    {
+      "name": "date_year",
+      "type": "engineered",
+      "source_columns": [
+        "date"
+      ],
+      "description": "year component of date",
+      "python_code": "df['date_year'] = pd.to_datetime(df['date']).dt.year",
+      "formula": "Extract year",
+      "transformation_type": "temporal_component",
+      "importance_score": 0.14419529837610826
+    },
+    {
+      "name": "store_id_over_discount_percentage",
+      "type": "interaction",
+      "source_columns": [
+        "store_id",
+        "discount_percentage"
+      ],
+      "description": "Divide interaction between store_id and discount_percentage",
+      "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['discount_percentage']) > 1e-08\ndf['store_id_over_discount_percentage'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'store_id_over_discount_percentage'] = df.loc[mask, 'store_id'] / df.loc[mask, 'discount_percentage']",
+      "formula": "f(x,y) = x / y (safe division)",
+      "transformation_type": "interaction",
+      "importance_score": 0.14320681857027864
     },
     {
       "name": "store_type_frequency",
-      "importance": 0.1397,
-      "type": "frequency_encoded",
+      "type": "categorical",
       "source_columns": [
         "store_type"
       ],
       "description": "Frequency encoding of store_type",
       "python_code": "freq_map = df['store_type'].value_counts().to_dict()\ndf['store_type_frequency'] = df['store_type'].map(freq_map)",
-      "formula": "Maps each category to its occurrence frequency"
-    },
-    {
-      "name": "product_category_is_Clothing",
-      "importance": 0.1305,
-      "type": "one_hot",
-      "source_columns": [
-        "product_category"
-      ],
-      "description": "Binary indicator for product_category==Clothing",
-      "python_code": "df['product_category_is_Clothing'] = (df['product_category'] == 'Clothing').astype(int)",
-      "formula": "1 if category matches, 0 otherwise"
-    },
-    {
-      "name": "competitor_price_ratio_squared",
-      "importance": 0.1197,
-      "type": "polynomial",
-      "source_columns": [
-        "competitor_price_ratio"
-      ],
-      "description": "Square of competitor_price_ratio",
-      "python_code": "df['competitor_price_ratio_squared'] = df['competitor_price_ratio'] ** 2",
-      "formula": "f(x) = x\u00b2 - captures quadratic relationships"
-    },
-    {
-      "name": "date_month_cos",
-      "importance": 0.103,
-      "type": "date_component",
-      "source_columns": [
-        "date"
-      ],
-      "description": "Cosine encoding of month",
-      "python_code": "df['date_month_cos'] = np.cos(2 * np.pi * pd.to_datetime(df['date']).dt.month / 12)",
-      "formula": "cos(2\u03c0 * month / 12) - captures cyclical nature"
+      "formula": "Count of each category value",
+      "transformation_type": "frequency_encoded",
+      "importance_score": 0.13634769093886087
     },
     {
       "name": "date_is_weekend",
-      "importance": 0.0981,
-      "type": "date_component",
+      "type": "engineered",
       "source_columns": [
         "date"
       ],
-      "description": "Binary indicator for weekend",
+      "description": "is_weekend component of date",
       "python_code": "df['date_is_weekend'] = pd.to_datetime(df['date']).dt.dayofweek.isin([5, 6]).astype(int)",
-      "formula": "1 if Saturday/Sunday, 0 otherwise"
+      "formula": "1 if Saturday/Sunday, 0 otherwise",
+      "transformation_type": "temporal_component",
+      "importance_score": 0.128123407184704
+    },
+    {
+      "name": "price_sin",
+      "type": "mathematical",
+      "source_columns": [
+        "price"
+      ],
+      "description": "sin transformation of price",
+      "python_code": "df['price_sin'] = np.sin(df['price'])",
+      "formula": "sin(x)",
+      "transformation_type": "trigonometric",
+      "importance_score": 0.12564814217513123
+    },
+    {
+      "name": "temperature_sin",
+      "type": "mathematical",
+      "source_columns": [
+        "temperature"
+      ],
+      "description": "sin transformation of temperature",
+      "python_code": "df['temperature_sin'] = np.sin(df['temperature'])",
+      "formula": "sin(x)",
+      "transformation_type": "trigonometric",
+      "importance_score": 0.12404656739768889
+    },
+    {
+      "name": "competitor_price_ratio_power_3",
+      "type": "mathematical",
+      "source_columns": [
+        "competitor_price_ratio"
+      ],
+      "description": "Polynomial degree 3 of competitor_price_ratio",
+      "python_code": "df['competitor_price_ratio_power_3'] = df['competitor_price_ratio'] ** 3",
+      "formula": "f(x) = x^3",
+      "transformation_type": "polynomial",
+      "importance_score": 0.123602954942635
+    },
+    {
+      "name": "store_type_is_C",
+      "type": "categorical",
+      "source_columns": [
+        "store_type"
+      ],
+      "description": "Binary indicator for store_type==C",
+      "python_code": "df['store_type_is_C'] = (df['store_type'] == 'C').astype(int)",
+      "formula": "1 if value matches, 0 otherwise",
+      "transformation_type": "one_hot",
+      "importance_score": 0.11820621249890832
+    },
+    {
+      "name": "date_quarter",
+      "type": "engineered",
+      "source_columns": [
+        "date"
+      ],
+      "description": "quarter component of date",
+      "python_code": "df['date_quarter'] = pd.to_datetime(df['date']).dt.quarter",
+      "formula": "Extract quarter (1-4)",
+      "transformation_type": "temporal_component",
+      "importance_score": 0.11443103269388634
+    },
+    {
+      "name": "discount_percentage_over_temperature",
+      "type": "interaction",
+      "source_columns": [
+        "discount_percentage",
+        "temperature"
+      ],
+      "description": "Divide interaction between discount_percentage and temperature",
+      "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['temperature']) > 1e-08\ndf['discount_percentage_over_temperature'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'discount_percentage_over_temperature'] = df.loc[mask, 'discount_percentage'] / df.loc[mask, 'temperature']",
+      "formula": "f(x,y) = x / y (safe division)",
+      "transformation_type": "interaction",
+      "importance_score": 0.11411348594429772
     },
     {
       "name": "store_type_is_A",
-      "importance": 0.0865,
-      "type": "one_hot",
+      "type": "categorical",
       "source_columns": [
         "store_type"
       ],
       "description": "Binary indicator for store_type==A",
       "python_code": "df['store_type_is_A'] = (df['store_type'] == 'A').astype(int)",
-      "formula": "1 if category matches, 0 otherwise"
+      "formula": "1 if value matches, 0 otherwise",
+      "transformation_type": "one_hot",
+      "importance_score": 0.11098727912799147
     },
     {
-      "name": "date_month",
-      "importance": 0.0829,
-      "type": "date_component",
+      "name": "store_id_sin",
+      "type": "mathematical",
       "source_columns": [
-        "date"
+        "store_id"
       ],
-      "description": "Month component (1-12)",
-      "python_code": "df['date_month'] = pd.to_datetime(df['date']).dt.month",
-      "formula": "Extracts month as integer"
+      "description": "sin transformation of store_id",
+      "python_code": "df['store_id_sin'] = np.sin(df['store_id'])",
+      "formula": "sin(x)",
+      "transformation_type": "trigonometric",
+      "importance_score": 0.10944572897734131
     },
     {
-      "name": "store_id_times_temperature",
-      "importance": 0.0819,
+      "name": "competitor_price_ratio_over_temperature",
       "type": "interaction",
       "source_columns": [
-        "store_id",
+        "competitor_price_ratio",
         "temperature"
       ],
-      "description": "Multiplication interaction between store_id and temperature",
-      "python_code": "df['store_id_times_temperature'] = df['store_id'] * df['temperature']",
-      "formula": "f(x,y) = x * y - captures multiplicative effects"
-    },
-    {
-      "name": "date_month_sin",
-      "importance": 0.077,
-      "type": "date_component",
-      "source_columns": [
-        "date"
-      ],
-      "description": "Sine encoding of month",
-      "python_code": "df['date_month_sin'] = np.sin(2 * np.pi * pd.to_datetime(df['date']).dt.month / 12)",
-      "formula": "sin(2\u03c0 * month / 12) - captures cyclical nature"
+      "description": "Divide interaction between competitor_price_ratio and temperature",
+      "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['temperature']) > 1e-08\ndf['competitor_price_ratio_over_temperature'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'competitor_price_ratio_over_temperature'] = df.loc[mask, 'competitor_price_ratio'] / df.loc[mask, 'temperature']",
+      "formula": "f(x,y) = x / y (safe division)",
+      "transformation_type": "interaction",
+      "importance_score": 0.10285122008615752
     },
     {
       "name": "store_type_is_B",
-      "importance": 0.0759,
-      "type": "one_hot",
+      "type": "categorical",
       "source_columns": [
         "store_type"
       ],
       "description": "Binary indicator for store_type==B",
       "python_code": "df['store_type_is_B'] = (df['store_type'] == 'B').astype(int)",
-      "formula": "1 if category matches, 0 otherwise"
+      "formula": "1 if value matches, 0 otherwise",
+      "transformation_type": "one_hot",
+      "importance_score": 0.09848386141582655
     },
     {
-      "name": "date_day",
-      "importance": 0.0662,
-      "type": "date_component",
+      "name": "store_id_exp",
+      "type": "mathematical",
+      "source_columns": [
+        "store_id"
+      ],
+      "description": "exp transformation of store_id",
+      "python_code": "df['store_id_exp'] = np.exp(df['store_id'].clip(upper=10.0))",
+      "formula": "exp(x)",
+      "transformation_type": "exponential",
+      "importance_score": 0.09626665089141792
+    },
+    {
+      "name": "store_id_over_temperature",
+      "type": "interaction",
+      "source_columns": [
+        "store_id",
+        "temperature"
+      ],
+      "description": "Divide interaction between store_id and temperature",
+      "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['temperature']) > 1e-08\ndf['store_id_over_temperature'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'store_id_over_temperature'] = df.loc[mask, 'store_id'] / df.loc[mask, 'temperature']",
+      "formula": "f(x,y) = x / y (safe division)",
+      "transformation_type": "interaction",
+      "importance_score": 0.0949822077793705
+    },
+    {
+      "name": "temperature_reciprocal",
+      "type": "mathematical",
+      "source_columns": [
+        "temperature"
+      ],
+      "description": "reciprocal transformation of temperature",
+      "python_code": "df['temperature_reciprocal'] = 1.0 / (df['temperature'] + 1e-08)",
+      "formula": "1 / (x + ε)",
+      "transformation_type": "reciprocal",
+      "importance_score": 0.09470904875810092
+    },
+    {
+      "name": "date_day_cos",
+      "type": "temporal",
       "source_columns": [
         "date"
       ],
-      "description": "Day of month (1-31)",
+      "description": "day_cos component of date",
+      "python_code": "df['date_day_cos'] = np.cos(2 * np.pi * pd.to_datetime(df['date']).dt.day / 31)",
+      "formula": "cos(2π * day / 31)",
+      "transformation_type": "temporal_cyclical",
+      "importance_score": 0.09410236555840787
+    },
+    {
+      "name": "product_category_is_Clothing",
+      "type": "categorical",
+      "source_columns": [
+        "product_category"
+      ],
+      "description": "Binary indicator for product_category==Clothing",
+      "python_code": "df['product_category_is_Clothing'] = (df['product_category'] == 'Clothing').astype(int)",
+      "formula": "1 if value matches, 0 otherwise",
+      "transformation_type": "one_hot",
+      "importance_score": 0.09132699556061641
+    },
+    {
+      "name": "date_month_cos",
+      "type": "temporal",
+      "source_columns": [
+        "date"
+      ],
+      "description": "month_cos component of date",
+      "python_code": "df['date_month_cos'] = np.cos(2 * np.pi * pd.to_datetime(df['date']).dt.month / 12)",
+      "formula": "cos(2π * month / 12)",
+      "transformation_type": "temporal_cyclical",
+      "importance_score": 0.08517491539176428
+    },
+    {
+      "name": "temperature_cos",
+      "type": "mathematical",
+      "source_columns": [
+        "temperature"
+      ],
+      "description": "cos transformation of temperature",
+      "python_code": "df['temperature_cos'] = np.cos(df['temperature'])",
+      "formula": "cos(x)",
+      "transformation_type": "trigonometric",
+      "importance_score": 0.08293220339149471
+    },
+    {
+      "name": "store_id_times_temperature",
+      "type": "interaction",
+      "source_columns": [
+        "store_id",
+        "temperature"
+      ],
+      "description": "Multiply interaction between store_id and temperature",
+      "python_code": "df['store_id_times_temperature'] = df['store_id'] * df['temperature']",
+      "formula": "f(x,y) = x * y",
+      "transformation_type": "interaction",
+      "importance_score": 0.08209734596509473
+    },
+    {
+      "name": "date_day",
+      "type": "engineered",
+      "source_columns": [
+        "date"
+      ],
+      "description": "day component of date",
       "python_code": "df['date_day'] = pd.to_datetime(df['date']).dt.day",
-      "formula": "Extracts day as integer"
+      "formula": "Extract day of month (1-31)",
+      "transformation_type": "temporal_component",
+      "importance_score": 0.07698516009937757
+    },
+    {
+      "name": "date_month_sin",
+      "type": "temporal",
+      "source_columns": [
+        "date"
+      ],
+      "description": "month_sin component of date",
+      "python_code": "df['date_month_sin'] = np.sin(2 * np.pi * pd.to_datetime(df['date']).dt.month / 12)",
+      "formula": "sin(2π * month / 12)",
+      "transformation_type": "temporal_cyclical",
+      "importance_score": 0.07585537500427698
+    },
+    {
+      "name": "date_day_sin",
+      "type": "temporal",
+      "source_columns": [
+        "date"
+      ],
+      "description": "day_sin component of date",
+      "python_code": "df['date_day_sin'] = np.sin(2 * np.pi * pd.to_datetime(df['date']).dt.day / 31)",
+      "formula": "sin(2π * day / 31)",
+      "transformation_type": "temporal_cyclical",
+      "importance_score": 0.070880579151445
+    },
+    {
+      "name": "temperature_exp",
+      "type": "mathematical",
+      "source_columns": [
+        "temperature"
+      ],
+      "description": "exp transformation of temperature",
+      "python_code": "df['temperature_exp'] = np.exp(df['temperature'].clip(upper=10.0))",
+      "formula": "exp(x)",
+      "transformation_type": "exponential",
+      "importance_score": 0.06620056064061343
+    },
+    {
+      "name": "price_cos",
+      "type": "mathematical",
+      "source_columns": [
+        "price"
+      ],
+      "description": "cos transformation of price",
+      "python_code": "df['price_cos'] = np.cos(df['price'])",
+      "formula": "cos(x)",
+      "transformation_type": "trigonometric",
+      "importance_score": 0.06443712382122352
     }
   ],
-  "usage_instructions": {
-    "description": "To recreate these features, use the Python code provided for each engineered feature.",
-    "required_imports": [
-      "import pandas as pd",
-      "import numpy as np"
-    ],
-    "example": "df[feature_name] = <python_code_from_recipe>"
+  "instructions": {
+    "description": "This recipe contains the code to recreate the selected features",
+    "usage": "Apply the python_code for each feature in the order listed",
+    "requirements": [
+      "pandas",
+      "numpy",
+      "scikit-learn"
+    ]
   }
 }

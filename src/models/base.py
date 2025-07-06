@@ -24,6 +24,7 @@ class DataType(str, Enum):
     DATETIME = "datetime"
     TEXT = "text"
     BINARY = "binary"
+    BOOLEAN = "boolean"
     UNKNOWN = "unknown"
 
 
