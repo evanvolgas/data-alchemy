@@ -1,0 +1,493 @@
+{
+  "dataset_info": {
+    "total_features_selected": 48,
+    "original_features_selected": 11,
+    "engineered_features_selected": 37,
+    "feature_reduction": "35.1%"
+  },
+  "original_features": [
+    {
+      "name": "payment_method",
+      "importance": 0.3357,
+      "data_type": "original"
+    },
+    {
+      "name": "contract_type",
+      "importance": 0.335,
+      "data_type": "original"
+    },
+    {
+      "name": "account_age_days",
+      "importance": 0.174,
+      "data_type": "original"
+    },
+    {
+      "name": "total_charges",
+      "importance": 0.1277,
+      "data_type": "original"
+    },
+    {
+      "name": "monthly_charges",
+      "importance": 0.1164,
+      "data_type": "original"
+    },
+    {
+      "name": "last_interaction_days",
+      "importance": 0.0885,
+      "data_type": "original"
+    },
+    {
+      "name": "has_streaming",
+      "importance": 0.0859,
+      "data_type": "original"
+    },
+    {
+      "name": "has_online_security",
+      "importance": 0.0847,
+      "data_type": "original"
+    },
+    {
+      "name": "has_tech_support",
+      "importance": 0.0711,
+      "data_type": "original"
+    },
+    {
+      "name": "customer_id",
+      "importance": 0.0057,
+      "data_type": "original"
+    },
+    {
+      "name": "signup_date",
+      "importance": 0.0,
+      "data_type": "original"
+    }
+  ],
+  "engineered_features": [
+    {
+      "name": "support_tickets_monthly_sqrt",
+      "importance": 0.1946,
+      "type": "sqrt_transform",
+      "source_columns": [
+        "support_tickets_monthly"
+      ],
+      "description": "Square root transform of support_tickets_monthly",
+      "python_code": "df['support_tickets_monthly_sqrt'] = np.sqrt(df['support_tickets_monthly'].fillna(0))",
+      "formula": "f(x) = \u221ax - mild variance stabilization"
+    },
+    {
+      "name": "support_tickets_monthly_squared",
+      "importance": 0.1787,
+      "type": "polynomial",
+      "source_columns": [
+        "support_tickets_monthly"
+      ],
+      "description": "Square of support_tickets_monthly",
+      "python_code": "df['support_tickets_monthly_squared'] = df['support_tickets_monthly'] ** 2",
+      "formula": "f(x) = x\u00b2 - captures quadratic relationships"
+    },
+    {
+      "name": "support_tickets_monthly_cubed",
+      "importance": 0.1709,
+      "type": "polynomial",
+      "source_columns": [
+        "support_tickets_monthly"
+      ],
+      "description": "Cube of support_tickets_monthly",
+      "python_code": "df['support_tickets_monthly_cubed'] = df['support_tickets_monthly'] ** 3",
+      "formula": "f(x) = x\u00b3 - captures cubic relationships"
+    },
+    {
+      "name": "account_age_days_times_total_charges",
+      "importance": 0.1669,
+      "type": "interaction",
+      "source_columns": [
+        "account_age_days",
+        "total_charges"
+      ],
+      "description": "Multiplication interaction between account_age_days and total_charges",
+      "python_code": "df['account_age_days_times_total_charges'] = df['account_age_days'] * df['total_charges']",
+      "formula": "f(x,y) = x * y - captures multiplicative effects"
+    },
+    {
+      "name": "account_age_days_over_avg_monthly_usage_gb",
+      "importance": 0.1646,
+      "type": "ratio",
+      "source_columns": [
+        "account_age_days",
+        "avg_monthly_usage_gb"
+      ],
+      "description": "Ratio of account_age_days to avg_monthly_usage_gb",
+      "python_code": "df['account_age_days_over_avg_monthly_usage_gb'] = df['account_age_days'] / (df['avg_monthly_usage_gb'] + 1e-8)",
+      "formula": "f(x,y) = x / y - captures proportional relationships"
+    },
+    {
+      "name": "account_age_days_cubed",
+      "importance": 0.1622,
+      "type": "polynomial",
+      "source_columns": [
+        "account_age_days"
+      ],
+      "description": "Cube of account_age_days",
+      "python_code": "df['account_age_days_cubed'] = df['account_age_days'] ** 3",
+      "formula": "f(x) = x\u00b3 - captures cubic relationships"
+    },
+    {
+      "name": "contract_type_is_One_year",
+      "importance": 0.1586,
+      "type": "one_hot",
+      "source_columns": [
+        "contract_type"
+      ],
+      "description": "Binary indicator for contract_type==One year",
+      "python_code": "df['contract_type_is_One_year'] = (df['contract_type'] == 'One_year').astype(int)",
+      "formula": "1 if category matches, 0 otherwise"
+    },
+    {
+      "name": "monthly_charges_times_total_charges",
+      "importance": 0.154,
+      "type": "interaction",
+      "source_columns": [
+        "monthly_charges",
+        "total_charges"
+      ],
+      "description": "Multiplication interaction between monthly_charges and total_charges",
+      "python_code": "df['monthly_charges_times_total_charges'] = df['monthly_charges'] * df['total_charges']",
+      "formula": "f(x,y) = x * y - captures multiplicative effects"
+    },
+    {
+      "name": "account_age_days_over_monthly_charges",
+      "importance": 0.1538,
+      "type": "ratio",
+      "source_columns": [
+        "account_age_days",
+        "monthly_charges"
+      ],
+      "description": "Ratio of account_age_days to monthly_charges",
+      "python_code": "df['account_age_days_over_monthly_charges'] = df['account_age_days'] / (df['monthly_charges'] + 1e-8)",
+      "formula": "f(x,y) = x / y - captures proportional relationships"
+    },
+    {
+      "name": "monthly_charges_over_total_charges",
+      "importance": 0.1332,
+      "type": "ratio",
+      "source_columns": [
+        "monthly_charges",
+        "total_charges"
+      ],
+      "description": "Ratio of monthly_charges to total_charges",
+      "python_code": "df['monthly_charges_over_total_charges'] = df['monthly_charges'] / (df['total_charges'] + 1e-8)",
+      "formula": "f(x,y) = x / y - captures proportional relationships"
+    },
+    {
+      "name": "account_age_days_times_peak_monthly_usage_gb",
+      "importance": 0.1323,
+      "type": "interaction",
+      "source_columns": [
+        "account_age_days",
+        "peak_monthly_usage_gb"
+      ],
+      "description": "Multiplication interaction between account_age_days and peak_monthly_usage_gb",
+      "python_code": "df['account_age_days_times_peak_monthly_usage_gb'] = df['account_age_days'] * df['peak_monthly_usage_gb']",
+      "formula": "f(x,y) = x * y - captures multiplicative effects"
+    },
+    {
+      "name": "account_age_days_over_peak_monthly_usage_gb",
+      "importance": 0.1314,
+      "type": "ratio",
+      "source_columns": [
+        "account_age_days",
+        "peak_monthly_usage_gb"
+      ],
+      "description": "Ratio of account_age_days to peak_monthly_usage_gb",
+      "python_code": "df['account_age_days_over_peak_monthly_usage_gb'] = df['account_age_days'] / (df['peak_monthly_usage_gb'] + 1e-8)",
+      "formula": "f(x,y) = x / y - captures proportional relationships"
+    },
+    {
+      "name": "total_charges_squared",
+      "importance": 0.1269,
+      "type": "polynomial",
+      "source_columns": [
+        "total_charges"
+      ],
+      "description": "Square of total_charges",
+      "python_code": "df['total_charges_squared'] = df['total_charges'] ** 2",
+      "formula": "f(x) = x\u00b2 - captures quadratic relationships"
+    },
+    {
+      "name": "monthly_charges_times_avg_monthly_usage_gb",
+      "importance": 0.1265,
+      "type": "interaction",
+      "source_columns": [
+        "monthly_charges",
+        "avg_monthly_usage_gb"
+      ],
+      "description": "Multiplication interaction between monthly_charges and avg_monthly_usage_gb",
+      "python_code": "df['monthly_charges_times_avg_monthly_usage_gb'] = df['monthly_charges'] * df['avg_monthly_usage_gb']",
+      "formula": "f(x,y) = x * y - captures multiplicative effects"
+    },
+    {
+      "name": "total_charges_sqrt",
+      "importance": 0.1261,
+      "type": "sqrt_transform",
+      "source_columns": [
+        "total_charges"
+      ],
+      "description": "Square root transform of total_charges",
+      "python_code": "df['total_charges_sqrt'] = np.sqrt(df['total_charges'].fillna(0))",
+      "formula": "f(x) = \u221ax - mild variance stabilization"
+    },
+    {
+      "name": "total_charges_cubed",
+      "importance": 0.126,
+      "type": "polynomial",
+      "source_columns": [
+        "total_charges"
+      ],
+      "description": "Cube of total_charges",
+      "python_code": "df['total_charges_cubed'] = df['total_charges'] ** 3",
+      "formula": "f(x) = x\u00b3 - captures cubic relationships"
+    },
+    {
+      "name": "total_charges_binned",
+      "importance": 0.1253,
+      "type": "binned",
+      "source_columns": [
+        "total_charges"
+      ],
+      "description": "total_charges discretized into 10 bins",
+      "python_code": "df['total_charges_binned'] = pd.qcut(df['total_charges'], 10, labels=False, duplicates='drop')",
+      "formula": "Equal-width binning into 10 categories"
+    },
+    {
+      "name": "payment_method_frequency",
+      "importance": 0.1207,
+      "type": "frequency_encoded",
+      "source_columns": [
+        "payment_method"
+      ],
+      "description": "Frequency encoding of payment_method",
+      "python_code": "freq_map = df['payment_method'].value_counts().to_dict()\ndf['payment_method_frequency'] = df['payment_method'].map(freq_map)",
+      "formula": "Maps each category to its occurrence frequency"
+    },
+    {
+      "name": "payment_method_is_Electronic_check",
+      "importance": 0.117,
+      "type": "one_hot",
+      "source_columns": [
+        "payment_method"
+      ],
+      "description": "Binary indicator for payment_method==Electronic check",
+      "python_code": "df['payment_method_is_Electronic_check'] = (df['payment_method'] == 'Electronic_check').astype(int)",
+      "formula": "1 if category matches, 0 otherwise"
+    },
+    {
+      "name": "account_age_days_times_avg_monthly_usage_gb",
+      "importance": 0.1168,
+      "type": "interaction",
+      "source_columns": [
+        "account_age_days",
+        "avg_monthly_usage_gb"
+      ],
+      "description": "Multiplication interaction between account_age_days and avg_monthly_usage_gb",
+      "python_code": "df['account_age_days_times_avg_monthly_usage_gb'] = df['account_age_days'] * df['avg_monthly_usage_gb']",
+      "formula": "f(x,y) = x * y - captures multiplicative effects"
+    },
+    {
+      "name": "signup_date_hour",
+      "importance": 0.1157,
+      "type": "date_component",
+      "source_columns": [
+        "signup_date"
+      ],
+      "description": "Hour component (0-23)",
+      "python_code": "df['signup_date_hour'] = pd.to_datetime(df['signup_date']).dt.hour",
+      "formula": "Extracts hour for intraday patterns"
+    },
+    {
+      "name": "contract_type_is_Month_to_month",
+      "importance": 0.1155,
+      "type": "one_hot",
+      "source_columns": [
+        "contract_type"
+      ],
+      "description": "Binary indicator for contract_type==Month-to-month",
+      "python_code": "df['contract_type_is_Month_to_month'] = (df['contract_type'] == 'Month_to_month').astype(int)",
+      "formula": "1 if category matches, 0 otherwise"
+    },
+    {
+      "name": "payment_method_is_Mailed_check",
+      "importance": 0.1148,
+      "type": "one_hot",
+      "source_columns": [
+        "payment_method"
+      ],
+      "description": "Binary indicator for payment_method==Mailed check",
+      "python_code": "df['payment_method_is_Mailed_check'] = (df['payment_method'] == 'Mailed_check').astype(int)",
+      "formula": "1 if category matches, 0 otherwise"
+    },
+    {
+      "name": "last_interaction_days_cubed",
+      "importance": 0.1143,
+      "type": "polynomial",
+      "source_columns": [
+        "last_interaction_days"
+      ],
+      "description": "Cube of last_interaction_days",
+      "python_code": "df['last_interaction_days_cubed'] = df['last_interaction_days'] ** 3",
+      "formula": "f(x) = x\u00b3 - captures cubic relationships"
+    },
+    {
+      "name": "peak_monthly_usage_gb_squared",
+      "importance": 0.1077,
+      "type": "polynomial",
+      "source_columns": [
+        "peak_monthly_usage_gb"
+      ],
+      "description": "Square of peak_monthly_usage_gb",
+      "python_code": "df['peak_monthly_usage_gb_squared'] = df['peak_monthly_usage_gb'] ** 2",
+      "formula": "f(x) = x\u00b2 - captures quadratic relationships"
+    },
+    {
+      "name": "avg_monthly_usage_gb_cubed",
+      "importance": 0.1063,
+      "type": "polynomial",
+      "source_columns": [
+        "avg_monthly_usage_gb"
+      ],
+      "description": "Cube of avg_monthly_usage_gb",
+      "python_code": "df['avg_monthly_usage_gb_cubed'] = df['avg_monthly_usage_gb'] ** 3",
+      "formula": "f(x) = x\u00b3 - captures cubic relationships"
+    },
+    {
+      "name": "peak_monthly_usage_gb_log",
+      "importance": 0.1033,
+      "type": "log_transform",
+      "source_columns": [
+        "peak_monthly_usage_gb"
+      ],
+      "description": "Natural log transform of peak_monthly_usage_gb",
+      "python_code": "df['peak_monthly_usage_gb_log'] = np.log1p(df['peak_monthly_usage_gb'])",
+      "formula": "f(x) = ln(x) - reduces right skewness"
+    },
+    {
+      "name": "contract_type_is_Two_year",
+      "importance": 0.1018,
+      "type": "one_hot",
+      "source_columns": [
+        "contract_type"
+      ],
+      "description": "Binary indicator for contract_type==Two year",
+      "python_code": "df['contract_type_is_Two_year'] = (df['contract_type'] == 'Two_year').astype(int)",
+      "formula": "1 if category matches, 0 otherwise"
+    },
+    {
+      "name": "signup_date_month_sin",
+      "importance": 0.0975,
+      "type": "date_component",
+      "source_columns": [
+        "signup_date"
+      ],
+      "description": "Sine encoding of month",
+      "python_code": "df['signup_date_month_sin'] = np.sin(2 * np.pi * pd.to_datetime(df['signup_date']).dt.month / 12)",
+      "formula": "sin(2\u03c0 * month / 12) - captures cyclical nature"
+    },
+    {
+      "name": "signup_date_dayofweek",
+      "importance": 0.095,
+      "type": "date_component",
+      "source_columns": [
+        "signup_date"
+      ],
+      "description": "Day of week (0=Monday)",
+      "python_code": "df['signup_date_dayofweek'] = pd.to_datetime(df['signup_date']).dt.dayofweek",
+      "formula": "Extracts day of week"
+    },
+    {
+      "name": "signup_date_day",
+      "importance": 0.0913,
+      "type": "date_component",
+      "source_columns": [
+        "signup_date"
+      ],
+      "description": "Day of month (1-31)",
+      "python_code": "df['signup_date_day'] = pd.to_datetime(df['signup_date']).dt.day",
+      "formula": "Extracts day as integer"
+    },
+    {
+      "name": "account_age_days_over_total_charges",
+      "importance": 0.0841,
+      "type": "ratio",
+      "source_columns": [
+        "account_age_days",
+        "total_charges"
+      ],
+      "description": "Ratio of account_age_days to total_charges",
+      "python_code": "df['account_age_days_over_total_charges'] = df['account_age_days'] / (df['total_charges'] + 1e-8)",
+      "formula": "f(x,y) = x / y - captures proportional relationships"
+    },
+    {
+      "name": "payment_method_is_Bank_transfer",
+      "importance": 0.082,
+      "type": "one_hot",
+      "source_columns": [
+        "payment_method"
+      ],
+      "description": "Binary indicator for payment_method==Bank transfer",
+      "python_code": "df['payment_method_is_Bank_transfer'] = (df['payment_method'] == 'Bank_transfer').astype(int)",
+      "formula": "1 if category matches, 0 otherwise"
+    },
+    {
+      "name": "monthly_charges_over_avg_monthly_usage_gb",
+      "importance": 0.0784,
+      "type": "ratio",
+      "source_columns": [
+        "monthly_charges",
+        "avg_monthly_usage_gb"
+      ],
+      "description": "Ratio of monthly_charges to avg_monthly_usage_gb",
+      "python_code": "df['monthly_charges_over_avg_monthly_usage_gb'] = df['monthly_charges'] / (df['avg_monthly_usage_gb'] + 1e-8)",
+      "formula": "f(x,y) = x / y - captures proportional relationships"
+    },
+    {
+      "name": "last_interaction_days_squared",
+      "importance": 0.0663,
+      "type": "polynomial",
+      "source_columns": [
+        "last_interaction_days"
+      ],
+      "description": "Square of last_interaction_days",
+      "python_code": "df['last_interaction_days_squared'] = df['last_interaction_days'] ** 2",
+      "formula": "f(x) = x\u00b2 - captures quadratic relationships"
+    },
+    {
+      "name": "signup_date_is_weekend",
+      "importance": 0.0638,
+      "type": "date_component",
+      "source_columns": [
+        "signup_date"
+      ],
+      "description": "Binary indicator for weekend",
+      "python_code": "df['signup_date_is_weekend'] = pd.to_datetime(df['signup_date']).dt.dayofweek.isin([5, 6]).astype(int)",
+      "formula": "1 if Saturday/Sunday, 0 otherwise"
+    },
+    {
+      "name": "payment_method_is_Credit_card",
+      "importance": 0.0626,
+      "type": "one_hot",
+      "source_columns": [
+        "payment_method"
+      ],
+      "description": "Binary indicator for payment_method==Credit card",
+      "python_code": "df['payment_method_is_Credit_card'] = (df['payment_method'] == 'Credit_card').astype(int)",
+      "formula": "1 if category matches, 0 otherwise"
+    }
+  ],
+  "usage_instructions": {
+    "description": "To recreate these features, use the Python code provided for each engineered feature.",
+    "required_imports": [
+      "import pandas as pd",
+      "import numpy as np"
+    ],
+    "example": "df[feature_name] = <python_code_from_recipe>"
+  }
+}

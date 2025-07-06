@@ -1,0 +1,254 @@
+{
+  "dataset_info": {
+    "total_features_selected": 22,
+    "original_features_selected": 2,
+    "engineered_features_selected": 20,
+    "feature_reduction": "37.1%"
+  },
+  "original_features": [
+    {
+      "name": "date",
+      "importance": 0.0475,
+      "data_type": "original"
+    },
+    {
+      "name": "category",
+      "importance": 0.0457,
+      "data_type": "original"
+    }
+  ],
+  "engineered_features": [
+    {
+      "name": "feature_1_cubed",
+      "importance": 0.355,
+      "type": "polynomial",
+      "source_columns": [
+        "feature_1"
+      ],
+      "description": "Cube of feature_1",
+      "python_code": "df['feature_1_cubed'] = df['feature_1'] ** 3",
+      "formula": "f(x) = x\u00b3 - captures cubic relationships"
+    },
+    {
+      "name": "feature_1_times_feature_2",
+      "importance": 0.2919,
+      "type": "interaction",
+      "source_columns": [
+        "feature_1",
+        "feature_2"
+      ],
+      "description": "Multiplication interaction between feature_1 and feature_2",
+      "python_code": "df['feature_1_times_feature_2'] = df['feature_1'] * df['feature_2']",
+      "formula": "f(x,y) = x * y - captures multiplicative effects"
+    },
+    {
+      "name": "feature_2_binned",
+      "importance": 0.2128,
+      "type": "binned",
+      "source_columns": [
+        "feature_2"
+      ],
+      "description": "feature_2 discretized into 10 bins",
+      "python_code": "df['feature_2_binned'] = pd.qcut(df['feature_2'], 10, labels=False, duplicates='drop')",
+      "formula": "Equal-width binning into 10 categories"
+    },
+    {
+      "name": "feature_1_over_feature_3",
+      "importance": 0.1827,
+      "type": "ratio",
+      "source_columns": [
+        "feature_1",
+        "feature_3"
+      ],
+      "description": "Ratio of feature_1 to feature_3",
+      "python_code": "df['feature_1_over_feature_3'] = df['feature_1'] / (df['feature_3'] + 1e-8)",
+      "formula": "f(x,y) = x / y - captures proportional relationships"
+    },
+    {
+      "name": "feature_1_times_feature_3",
+      "importance": 0.1691,
+      "type": "interaction",
+      "source_columns": [
+        "feature_1",
+        "feature_3"
+      ],
+      "description": "Multiplication interaction between feature_1 and feature_3",
+      "python_code": "df['feature_1_times_feature_3'] = df['feature_1'] * df['feature_3']",
+      "formula": "f(x,y) = x * y - captures multiplicative effects"
+    },
+    {
+      "name": "feature_2_cubed",
+      "importance": 0.1689,
+      "type": "polynomial",
+      "source_columns": [
+        "feature_2"
+      ],
+      "description": "Cube of feature_2",
+      "python_code": "df['feature_2_cubed'] = df['feature_2'] ** 3",
+      "formula": "f(x) = x\u00b3 - captures cubic relationships"
+    },
+    {
+      "name": "feature_2_times_feature_3",
+      "importance": 0.134,
+      "type": "interaction",
+      "source_columns": [
+        "feature_2",
+        "feature_3"
+      ],
+      "description": "Multiplication interaction between feature_2 and feature_3",
+      "python_code": "df['feature_2_times_feature_3'] = df['feature_2'] * df['feature_3']",
+      "formula": "f(x,y) = x * y - captures multiplicative effects"
+    },
+    {
+      "name": "feature_3_squared",
+      "importance": 0.115,
+      "type": "polynomial",
+      "source_columns": [
+        "feature_3"
+      ],
+      "description": "Square of feature_3",
+      "python_code": "df['feature_3_squared'] = df['feature_3'] ** 2",
+      "formula": "f(x) = x\u00b2 - captures quadratic relationships"
+    },
+    {
+      "name": "date_month_cos",
+      "importance": 0.1036,
+      "type": "date_component",
+      "source_columns": [
+        "date"
+      ],
+      "description": "Cosine encoding of month",
+      "python_code": "df['date_month_cos'] = np.cos(2 * np.pi * pd.to_datetime(df['date']).dt.month / 12)",
+      "formula": "cos(2\u03c0 * month / 12) - captures cyclical nature"
+    },
+    {
+      "name": "date_month",
+      "importance": 0.1008,
+      "type": "date_component",
+      "source_columns": [
+        "date"
+      ],
+      "description": "Month component (1-12)",
+      "python_code": "df['date_month'] = pd.to_datetime(df['date']).dt.month",
+      "formula": "Extracts month as integer"
+    },
+    {
+      "name": "date_day",
+      "importance": 0.0987,
+      "type": "date_component",
+      "source_columns": [
+        "date"
+      ],
+      "description": "Day of month (1-31)",
+      "python_code": "df['date_day'] = pd.to_datetime(df['date']).dt.day",
+      "formula": "Extracts day as integer"
+    },
+    {
+      "name": "date_year",
+      "importance": 0.0983,
+      "type": "date_component",
+      "source_columns": [
+        "date"
+      ],
+      "description": "Year component",
+      "python_code": "df['date_year'] = pd.to_datetime(df['date']).dt.year",
+      "formula": "Extracts year as integer"
+    },
+    {
+      "name": "date_month_sin",
+      "importance": 0.0965,
+      "type": "date_component",
+      "source_columns": [
+        "date"
+      ],
+      "description": "Sine encoding of month",
+      "python_code": "df['date_month_sin'] = np.sin(2 * np.pi * pd.to_datetime(df['date']).dt.month / 12)",
+      "formula": "sin(2\u03c0 * month / 12) - captures cyclical nature"
+    },
+    {
+      "name": "category_is_A",
+      "importance": 0.0959,
+      "type": "one_hot",
+      "source_columns": [
+        "category"
+      ],
+      "description": "Binary indicator for category==A",
+      "python_code": "df['category_is_A'] = (df['category'] == 'A').astype(int)",
+      "formula": "1 if category matches, 0 otherwise"
+    },
+    {
+      "name": "category_is_B",
+      "importance": 0.094,
+      "type": "one_hot",
+      "source_columns": [
+        "category"
+      ],
+      "description": "Binary indicator for category==B",
+      "python_code": "df['category_is_B'] = (df['category'] == 'B').astype(int)",
+      "formula": "1 if category matches, 0 otherwise"
+    },
+    {
+      "name": "date_dayofweek",
+      "importance": 0.0826,
+      "type": "date_component",
+      "source_columns": [
+        "date"
+      ],
+      "description": "Day of week (0=Monday)",
+      "python_code": "df['date_dayofweek'] = pd.to_datetime(df['date']).dt.dayofweek",
+      "formula": "Extracts day of week"
+    },
+    {
+      "name": "category_is_C",
+      "importance": 0.0809,
+      "type": "one_hot",
+      "source_columns": [
+        "category"
+      ],
+      "description": "Binary indicator for category==C",
+      "python_code": "df['category_is_C'] = (df['category'] == 'C').astype(int)",
+      "formula": "1 if category matches, 0 otherwise"
+    },
+    {
+      "name": "category_is_D",
+      "importance": 0.0657,
+      "type": "one_hot",
+      "source_columns": [
+        "category"
+      ],
+      "description": "Binary indicator for category==D",
+      "python_code": "df['category_is_D'] = (df['category'] == 'D').astype(int)",
+      "formula": "1 if category matches, 0 otherwise"
+    },
+    {
+      "name": "category_frequency",
+      "importance": 0.0641,
+      "type": "frequency_encoded",
+      "source_columns": [
+        "category"
+      ],
+      "description": "Frequency encoding of category",
+      "python_code": "freq_map = df['category'].value_counts().to_dict()\ndf['category_frequency'] = df['category'].map(freq_map)",
+      "formula": "Maps each category to its occurrence frequency"
+    },
+    {
+      "name": "date_is_weekend",
+      "importance": 0.0624,
+      "type": "date_component",
+      "source_columns": [
+        "date"
+      ],
+      "description": "Binary indicator for weekend",
+      "python_code": "df['date_is_weekend'] = pd.to_datetime(df['date']).dt.dayofweek.isin([5, 6]).astype(int)",
+      "formula": "1 if Saturday/Sunday, 0 otherwise"
+    }
+  ],
+  "usage_instructions": {
+    "description": "To recreate these features, use the Python code provided for each engineered feature.",
+    "required_imports": [
+      "import pandas as pd",
+      "import numpy as np"
+    ],
+    "example": "df[feature_name] = <python_code_from_recipe>"
+  }
+}
