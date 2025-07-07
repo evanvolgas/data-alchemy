@@ -55,7 +55,7 @@
       "python_code": "df['feature_2_binned'] = pd.qcut(df['feature_2'], 10, labels=False, duplicates='drop')",
       "formula": "Quantile-based binning into 10 bins",
       "transformation_type": "binned",
-      "importance_score": 0.21050115135490122
+      "importance_score": 0.2105011513549012
     },
     {
       "name": "feature_2_log",
@@ -117,7 +117,7 @@
       "python_code": "df['feature_2_exp'] = np.exp(df['feature_2'].clip(upper=10.0))",
       "formula": "exp(x)",
       "transformation_type": "exponential",
-      "importance_score": 0.14716175036897083
+      "importance_score": 0.1471617503689708
     },
     {
       "name": "feature_2_times_feature_3",
@@ -202,7 +202,7 @@
       "python_code": "df['date_month'] = pd.to_datetime(df['date']).dt.month",
       "formula": "Extract month (1-12)",
       "transformation_type": "temporal_component",
-      "importance_score": 0.10003238054209804
+      "importance_score": 0.10003238054209802
     },
     {
       "name": "feature_3_cos",
@@ -238,7 +238,7 @@
       "python_code": "df['date_month_sin'] = np.sin(2 * np.pi * pd.to_datetime(df['date']).dt.month / 12)",
       "formula": "sin(2π * month / 12)",
       "transformation_type": "temporal_cyclical",
-      "importance_score": 0.09513516856907535
+      "importance_score": 0.09513516856907533
     },
     {
       "name": "category_is_A",
@@ -262,7 +262,7 @@
       "python_code": "df['date_day'] = pd.to_datetime(df['date']).dt.day",
       "formula": "Extract day of month (1-31)",
       "transformation_type": "temporal_component",
-      "importance_score": 0.09487094904248645
+      "importance_score": 0.09487094904248644
     },
     {
       "name": "category_is_B",

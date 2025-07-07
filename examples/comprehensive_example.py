@@ -162,24 +162,31 @@ def display_results(results, improvement, dataset_name):
     perf_table.add_column("Improvement", style="bold green")
     
     if 'r2_improvement' in improvement:
+        r2_diff = improvement['r2_improvement']
+        r2_sign = "+" if r2_diff >= 0 else ""
+        mse_diff = improvement['mse_reduction']
+        mse_sign = "-" if mse_diff >= 0 else "+"
+        
         perf_table.add_row(
             "R² Score",
             f"{improvement['original_r2']:.4f}",
             f"{improvement['engineered_r2']:.4f}",
-            f"+{improvement['r2_improvement']:.1f}%"
+            f"{r2_sign}{r2_diff:.1f}%"
         )
         perf_table.add_row(
             "MSE",
             f"{improvement['original_mse']:.2f}",
             f"{improvement['engineered_mse']:.2f}",
-            f"-{improvement['mse_reduction']:.1f}%"
+            f"{mse_sign}{abs(mse_diff):.1f}%"
         )
     else:
+        acc_diff = improvement['accuracy_improvement']
+        sign = "+" if acc_diff >= 0 else ""
         perf_table.add_row(
             "Accuracy",
             f"{improvement['original_accuracy']:.4f}",
             f"{improvement['engineered_accuracy']:.4f}",
-            f"+{improvement['accuracy_improvement']:.1f}%"
+            f"{sign}{acc_diff:.1f}%"
         )
     
     console.print(perf_table)
@@ -282,13 +289,15 @@ def main():
     console.print("\n" + "="*60)
     console.print(Panel.fit(
         "[bold green]Analysis Complete![/bold green]\n\n"
-        "DataAlchemy successfully engineered features that improved model performance across all datasets.\n"
+        "DataAlchemy successfully engineered features for all datasets.\n"
         "The system automatically:\n"
         "• Detected non-linear relationships and created polynomial features\n"
         "• Identified important ratios and interactions\n"
         "• Extracted temporal patterns from date columns\n"
         "• Encoded categorical variables effectively\n"
-        "• Selected the most impactful features while removing redundancy",
+        "• Selected the most impactful features while removing redundancy\n\n"
+        "Note: Feature engineering may not always improve performance.\n"
+        "Results depend on the dataset characteristics and existing feature quality.",
         style="green"
     ))
     

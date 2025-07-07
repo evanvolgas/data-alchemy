@@ -18,7 +18,7 @@
       "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['support_tickets_monthly']) > 1e-08\ndf['account_age_days_over_support_tickets_monthly'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'account_age_days_over_support_tickets_monthly'] = df.loc[mask, 'account_age_days'] / df.loc[mask, 'support_tickets_monthly']",
       "formula": "f(x,y) = x / y (safe division)",
       "transformation_type": "interaction",
-      "importance_score": 0.22484662416547999
+      "importance_score": 0.22928591841719512
     },
     {
       "name": "total_charges_over_support_tickets_monthly",
@@ -31,7 +31,7 @@
       "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['support_tickets_monthly']) > 1e-08\ndf['total_charges_over_support_tickets_monthly'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'total_charges_over_support_tickets_monthly'] = df.loc[mask, 'total_charges'] / df.loc[mask, 'support_tickets_monthly']",
       "formula": "f(x,y) = x / y (safe division)",
       "transformation_type": "interaction",
-      "importance_score": 0.205752183284702
+      "importance_score": 0.2046065720163651
     },
     {
       "name": "account_age_days_times_support_tickets_monthly",
@@ -44,7 +44,7 @@
       "python_code": "df['account_age_days_times_support_tickets_monthly'] = df['account_age_days'] * df['support_tickets_monthly']",
       "formula": "f(x,y) = x * y",
       "transformation_type": "interaction",
-      "importance_score": 0.1967211884940743
+      "importance_score": 0.1967711711516027
     },
     {
       "name": "peak_monthly_usage_gb_times_support_tickets_monthly",
@@ -57,7 +57,7 @@
       "python_code": "df['peak_monthly_usage_gb_times_support_tickets_monthly'] = df['peak_monthly_usage_gb'] * df['support_tickets_monthly']",
       "formula": "f(x,y) = x * y",
       "transformation_type": "interaction",
-      "importance_score": 0.1870116330076172
+      "importance_score": 0.1869222160637431
     },
     {
       "name": "support_tickets_monthly_exp",
@@ -69,7 +69,7 @@
       "python_code": "df['support_tickets_monthly_exp'] = np.exp(df['support_tickets_monthly'].clip(upper=10.0))",
       "formula": "exp(x)",
       "transformation_type": "exponential",
-      "importance_score": 0.186140450409535
+      "importance_score": 0.1859993594535894
     },
     {
       "name": "peak_monthly_usage_gb_over_support_tickets_monthly",
@@ -82,7 +82,7 @@
       "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['support_tickets_monthly']) > 1e-08\ndf['peak_monthly_usage_gb_over_support_tickets_monthly'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'peak_monthly_usage_gb_over_support_tickets_monthly'] = df.loc[mask, 'peak_monthly_usage_gb'] / df.loc[mask, 'support_tickets_monthly']",
       "formula": "f(x,y) = x / y (safe division)",
       "transformation_type": "interaction",
-      "importance_score": 0.18320787942894962
+      "importance_score": 0.18273556023897308
     },
     {
       "name": "total_charges_times_support_tickets_monthly",
@@ -95,7 +95,7 @@
       "python_code": "df['total_charges_times_support_tickets_monthly'] = df['total_charges'] * df['support_tickets_monthly']",
       "formula": "f(x,y) = x * y",
       "transformation_type": "interaction",
-      "importance_score": 0.18143688075501088
+      "importance_score": 0.18136196064650534
     },
     {
       "name": "support_tickets_monthly_sqrt",
@@ -107,7 +107,7 @@
       "python_code": "df['support_tickets_monthly_sqrt'] = np.sqrt(df['support_tickets_monthly'].clip(lower=0))",
       "formula": "sqrt(x) for x >= 0",
       "transformation_type": "sqrt",
-      "importance_score": 0.17685754562825365
+      "importance_score": 0.17677230739688707
     },
     {
       "name": "avg_monthly_usage_gb_times_support_tickets_monthly",
@@ -120,7 +120,7 @@
       "python_code": "df['avg_monthly_usage_gb_times_support_tickets_monthly'] = df['avg_monthly_usage_gb'] * df['support_tickets_monthly']",
       "formula": "f(x,y) = x * y",
       "transformation_type": "interaction",
-      "importance_score": 0.17281980036955608
+      "importance_score": 0.1722557516334473
     },
     {
       "name": "monthly_charges_times_support_tickets_monthly",
@@ -133,7 +133,7 @@
       "python_code": "df['monthly_charges_times_support_tickets_monthly'] = df['monthly_charges'] * df['support_tickets_monthly']",
       "formula": "f(x,y) = x * y",
       "transformation_type": "interaction",
-      "importance_score": 0.16822235844308772
+      "importance_score": 0.16817276168188314
     },
     {
       "name": "support_tickets_monthly_power_2",
@@ -145,20 +145,7 @@
       "python_code": "df['support_tickets_monthly_power_2'] = df['support_tickets_monthly'] ** 2",
       "formula": "f(x) = x^2",
       "transformation_type": "polynomial",
-      "importance_score": 0.1658875504983075
-    },
-    {
-      "name": "account_age_days_times_total_charges",
-      "type": "interaction",
-      "source_columns": [
-        "account_age_days",
-        "total_charges"
-      ],
-      "description": "Multiply interaction between account_age_days and total_charges",
-      "python_code": "df['account_age_days_times_total_charges'] = df['account_age_days'] * df['total_charges']",
-      "formula": "f(x,y) = x * y",
-      "transformation_type": "interaction",
-      "importance_score": 0.16507064477810465
+      "importance_score": 0.16576007498339548
     },
     {
       "name": "avg_monthly_usage_gb_over_support_tickets_monthly",
@@ -171,7 +158,20 @@
       "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['support_tickets_monthly']) > 1e-08\ndf['avg_monthly_usage_gb_over_support_tickets_monthly'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'avg_monthly_usage_gb_over_support_tickets_monthly'] = df.loc[mask, 'avg_monthly_usage_gb'] / df.loc[mask, 'support_tickets_monthly']",
       "formula": "f(x,y) = x / y (safe division)",
       "transformation_type": "interaction",
-      "importance_score": 0.16494240367775276
+      "importance_score": 0.16487620763589264
+    },
+    {
+      "name": "account_age_days_times_total_charges",
+      "type": "interaction",
+      "source_columns": [
+        "account_age_days",
+        "total_charges"
+      ],
+      "description": "Multiply interaction between account_age_days and total_charges",
+      "python_code": "df['account_age_days_times_total_charges'] = df['account_age_days'] * df['total_charges']",
+      "formula": "f(x,y) = x * y",
+      "transformation_type": "interaction",
+      "importance_score": 0.16477937618145103
     },
     {
       "name": "account_age_days_over_avg_monthly_usage_gb",
@@ -184,19 +184,7 @@
       "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['avg_monthly_usage_gb']) > 1e-08\ndf['account_age_days_over_avg_monthly_usage_gb'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'account_age_days_over_avg_monthly_usage_gb'] = df.loc[mask, 'account_age_days'] / df.loc[mask, 'avg_monthly_usage_gb']",
       "formula": "f(x,y) = x / y (safe division)",
       "transformation_type": "interaction",
-      "importance_score": 0.16181851132468572
-    },
-    {
-      "name": "account_age_days_power_2",
-      "type": "mathematical",
-      "source_columns": [
-        "account_age_days"
-      ],
-      "description": "Polynomial degree 2 of account_age_days",
-      "python_code": "df['account_age_days_power_2'] = df['account_age_days'] ** 2",
-      "formula": "f(x) = x^2",
-      "transformation_type": "polynomial",
-      "importance_score": 0.16041508165720383
+      "importance_score": 0.16188246228585215
     },
     {
       "name": "monthly_charges_sin",
@@ -208,20 +196,19 @@
       "python_code": "df['monthly_charges_sin'] = np.sin(df['monthly_charges'])",
       "formula": "sin(x)",
       "transformation_type": "trigonometric",
-      "importance_score": 0.16031774075314226
+      "importance_score": 0.15997394840944962
     },
     {
-      "name": "account_age_days_times_last_interaction_days",
-      "type": "interaction",
+      "name": "account_age_days_power_2",
+      "type": "mathematical",
       "source_columns": [
-        "account_age_days",
-        "last_interaction_days"
+        "account_age_days"
       ],
-      "description": "Multiply interaction between account_age_days and last_interaction_days",
-      "python_code": "df['account_age_days_times_last_interaction_days'] = df['account_age_days'] * df['last_interaction_days']",
-      "formula": "f(x,y) = x * y",
-      "transformation_type": "interaction",
-      "importance_score": 0.15878964992777234
+      "description": "Polynomial degree 2 of account_age_days",
+      "python_code": "df['account_age_days_power_2'] = df['account_age_days'] ** 2",
+      "formula": "f(x) = x^2",
+      "transformation_type": "polynomial",
+      "importance_score": 0.159272266514816
     },
     {
       "name": "support_tickets_monthly_over_last_interaction_days",
@@ -234,7 +221,32 @@
       "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['last_interaction_days']) > 1e-08\ndf['support_tickets_monthly_over_last_interaction_days'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'support_tickets_monthly_over_last_interaction_days'] = df.loc[mask, 'support_tickets_monthly'] / df.loc[mask, 'last_interaction_days']",
       "formula": "f(x,y) = x / y (safe division)",
       "transformation_type": "interaction",
-      "importance_score": 0.15858762634017984
+      "importance_score": 0.15891922836374023
+    },
+    {
+      "name": "contract_type_frequency",
+      "type": "categorical",
+      "source_columns": [
+        "contract_type"
+      ],
+      "description": "Frequency encoding of contract_type",
+      "python_code": "freq_map = df['contract_type'].value_counts().to_dict()\ndf['contract_type_frequency'] = df['contract_type'].map(freq_map)",
+      "formula": "Count of each category value",
+      "transformation_type": "frequency_encoded",
+      "importance_score": 0.15844160998408807
+    },
+    {
+      "name": "account_age_days_times_last_interaction_days",
+      "type": "interaction",
+      "source_columns": [
+        "account_age_days",
+        "last_interaction_days"
+      ],
+      "description": "Multiply interaction between account_age_days and last_interaction_days",
+      "python_code": "df['account_age_days_times_last_interaction_days'] = df['account_age_days'] * df['last_interaction_days']",
+      "formula": "f(x,y) = x * y",
+      "transformation_type": "interaction",
+      "importance_score": 0.15825623602500852
     },
     {
       "name": "monthly_charges_over_support_tickets_monthly",
@@ -247,19 +259,7 @@
       "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['support_tickets_monthly']) > 1e-08\ndf['monthly_charges_over_support_tickets_monthly'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'monthly_charges_over_support_tickets_monthly'] = df.loc[mask, 'monthly_charges'] / df.loc[mask, 'support_tickets_monthly']",
       "formula": "f(x,y) = x / y (safe division)",
       "transformation_type": "interaction",
-      "importance_score": 0.15834519104016817
-    },
-    {
-      "name": "contract_type_frequency",
-      "type": "categorical",
-      "source_columns": [
-        "contract_type"
-      ],
-      "description": "Frequency encoding of contract_type",
-      "python_code": "freq_map = df['contract_type'].value_counts().to_dict()\ndf['contract_type_frequency'] = df['contract_type'].map(freq_map)",
-      "formula": "Count of each category value",
-      "transformation_type": "frequency_encoded",
-      "importance_score": 0.15746090182555145
+      "importance_score": 0.15801702641117646
     },
     {
       "name": "support_tickets_monthly_sin",
@@ -271,7 +271,7 @@
       "python_code": "df['support_tickets_monthly_sin'] = np.sin(df['support_tickets_monthly'])",
       "formula": "sin(x)",
       "transformation_type": "trigonometric",
-      "importance_score": 0.15452160477652488
+      "importance_score": 0.15444878224296552
     },
     {
       "name": "monthly_charges_times_total_charges",
@@ -284,7 +284,7 @@
       "python_code": "df['monthly_charges_times_total_charges'] = df['monthly_charges'] * df['total_charges']",
       "formula": "f(x,y) = x * y",
       "transformation_type": "interaction",
-      "importance_score": 0.15235310367723276
+      "importance_score": 0.15274624665938627
     },
     {
       "name": "support_tickets_monthly_times_last_interaction_days",
@@ -297,7 +297,7 @@
       "python_code": "df['support_tickets_monthly_times_last_interaction_days'] = df['support_tickets_monthly'] * df['last_interaction_days']",
       "formula": "f(x,y) = x * y",
       "transformation_type": "interaction",
-      "importance_score": 0.15083040779648701
+      "importance_score": 0.1511788736447932
     },
     {
       "name": "monthly_charges_binned",
@@ -309,7 +309,7 @@
       "python_code": "df['monthly_charges_binned'] = pd.qcut(df['monthly_charges'], 10, labels=False, duplicates='drop')",
       "formula": "Quantile-based binning into 10 bins",
       "transformation_type": "binned",
-      "importance_score": 0.149593797394166
+      "importance_score": 0.14955777381178634
     },
     {
       "name": "account_age_days_over_monthly_charges",
@@ -322,19 +322,7 @@
       "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['monthly_charges']) > 1e-08\ndf['account_age_days_over_monthly_charges'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'account_age_days_over_monthly_charges'] = df.loc[mask, 'account_age_days'] / df.loc[mask, 'monthly_charges']",
       "formula": "f(x,y) = x / y (safe division)",
       "transformation_type": "interaction",
-      "importance_score": 0.14764629368089874
-    },
-    {
-      "name": "signup_date_month_sin",
-      "type": "temporal",
-      "source_columns": [
-        "signup_date"
-      ],
-      "description": "month_sin component of signup_date",
-      "python_code": "df['signup_date_month_sin'] = np.sin(2 * np.pi * pd.to_datetime(df['signup_date']).dt.month / 12)",
-      "formula": "sin(2π * month / 12)",
-      "transformation_type": "temporal_cyclical",
-      "importance_score": 0.14286870297195708
+      "importance_score": 0.1483323183297312
     },
     {
       "name": "monthly_charges_times_peak_monthly_usage_gb",
@@ -347,7 +335,7 @@
       "python_code": "df['monthly_charges_times_peak_monthly_usage_gb'] = df['monthly_charges'] * df['peak_monthly_usage_gb']",
       "formula": "f(x,y) = x * y",
       "transformation_type": "interaction",
-      "importance_score": 0.1388575744161011
+      "importance_score": 0.1384142251530288
     },
     {
       "name": "payment_method_is_Electronic_check",
@@ -359,7 +347,7 @@
       "python_code": "df['payment_method_is_Electronic_check'] = (df['payment_method'] == 'Electronic check').astype(int)",
       "formula": "1 if value matches, 0 otherwise",
       "transformation_type": "one_hot",
-      "importance_score": 0.13611126858490039
+      "importance_score": 0.1349567615710708
     },
     {
       "name": "total_charges_times_peak_monthly_usage_gb",
@@ -372,7 +360,7 @@
       "python_code": "df['total_charges_times_peak_monthly_usage_gb'] = df['total_charges'] * df['peak_monthly_usage_gb']",
       "formula": "f(x,y) = x * y",
       "transformation_type": "interaction",
-      "importance_score": 0.13435558348557614
+      "importance_score": 0.13387882009484883
     },
     {
       "name": "monthly_charges_over_total_charges",
@@ -385,7 +373,7 @@
       "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['total_charges']) > 1e-08\ndf['monthly_charges_over_total_charges'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'monthly_charges_over_total_charges'] = df.loc[mask, 'monthly_charges'] / df.loc[mask, 'total_charges']",
       "formula": "f(x,y) = x / y (safe division)",
       "transformation_type": "interaction",
-      "importance_score": 0.1334850382492708
+      "importance_score": 0.13168311069136912
     },
     {
       "name": "account_age_days_times_peak_monthly_usage_gb",
@@ -398,7 +386,7 @@
       "python_code": "df['account_age_days_times_peak_monthly_usage_gb'] = df['account_age_days'] * df['peak_monthly_usage_gb']",
       "formula": "f(x,y) = x * y",
       "transformation_type": "interaction",
-      "importance_score": 0.1289482253513245
+      "importance_score": 0.12922758972112292
     },
     {
       "name": "account_age_days_over_peak_monthly_usage_gb",
@@ -411,7 +399,7 @@
       "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['peak_monthly_usage_gb']) > 1e-08\ndf['account_age_days_over_peak_monthly_usage_gb'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'account_age_days_over_peak_monthly_usage_gb'] = df.loc[mask, 'account_age_days'] / df.loc[mask, 'peak_monthly_usage_gb']",
       "formula": "f(x,y) = x / y (safe division)",
       "transformation_type": "interaction",
-      "importance_score": 0.12880377949884333
+      "importance_score": 0.1284699037356742
     },
     {
       "name": "total_charges_sin",
@@ -423,19 +411,7 @@
       "python_code": "df['total_charges_sin'] = np.sin(df['total_charges'])",
       "formula": "sin(x)",
       "transformation_type": "trigonometric",
-      "importance_score": 0.12817600030544468
-    },
-    {
-      "name": "total_charges_power_2",
-      "type": "mathematical",
-      "source_columns": [
-        "total_charges"
-      ],
-      "description": "Polynomial degree 2 of total_charges",
-      "python_code": "df['total_charges_power_2'] = df['total_charges'] ** 2",
-      "formula": "f(x) = x^2",
-      "transformation_type": "polynomial",
-      "importance_score": 0.12613472610779558
+      "importance_score": 0.128469057074443
     },
     {
       "name": "total_charges_times_avg_monthly_usage_gb",
@@ -448,7 +424,7 @@
       "python_code": "df['total_charges_times_avg_monthly_usage_gb'] = df['total_charges'] * df['avg_monthly_usage_gb']",
       "formula": "f(x,y) = x * y",
       "transformation_type": "interaction",
-      "importance_score": 0.12606498171646896
+      "importance_score": 0.12581636570611895
     },
     {
       "name": "total_charges_log",
@@ -460,7 +436,7 @@
       "python_code": "df['total_charges_log'] = np.log(df['total_charges'].clip(lower=1e-8))",
       "formula": "log(x) for x > 0",
       "transformation_type": "log",
-      "importance_score": 0.1255609573922914
+      "importance_score": 0.12559773976859065
     },
     {
       "name": "total_charges_over_peak_monthly_usage_gb",
@@ -473,7 +449,7 @@
       "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['peak_monthly_usage_gb']) > 1e-08\ndf['total_charges_over_peak_monthly_usage_gb'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'total_charges_over_peak_monthly_usage_gb'] = df.loc[mask, 'total_charges'] / df.loc[mask, 'peak_monthly_usage_gb']",
       "formula": "f(x,y) = x / y (safe division)",
       "transformation_type": "interaction",
-      "importance_score": 0.12514552896179254
+      "importance_score": 0.12559362507629873
     },
     {
       "name": "account_age_days_sin",
@@ -485,19 +461,19 @@
       "python_code": "df['account_age_days_sin'] = np.sin(df['account_age_days'])",
       "formula": "sin(x)",
       "transformation_type": "trigonometric",
-      "importance_score": 0.12476672053263964
+      "importance_score": 0.12505107247898292
     },
     {
-      "name": "total_charges_sqrt",
+      "name": "total_charges_power_2",
       "type": "mathematical",
       "source_columns": [
         "total_charges"
       ],
-      "description": "sqrt transformation of total_charges",
-      "python_code": "df['total_charges_sqrt'] = np.sqrt(df['total_charges'].clip(lower=0))",
-      "formula": "sqrt(x) for x >= 0",
-      "transformation_type": "sqrt",
-      "importance_score": 0.12464165043608083
+      "description": "Polynomial degree 2 of total_charges",
+      "python_code": "df['total_charges_power_2'] = df['total_charges'] ** 2",
+      "formula": "f(x) = x^2",
+      "transformation_type": "polynomial",
+      "importance_score": 0.12493525441940467
     },
     {
       "name": "total_charges_power_3",
@@ -509,7 +485,19 @@
       "python_code": "df['total_charges_power_3'] = df['total_charges'] ** 3",
       "formula": "f(x) = x^3",
       "transformation_type": "polynomial",
-      "importance_score": 0.12431147606207305
+      "importance_score": 0.12441742777071534
+    },
+    {
+      "name": "total_charges_sqrt",
+      "type": "mathematical",
+      "source_columns": [
+        "total_charges"
+      ],
+      "description": "sqrt transformation of total_charges",
+      "python_code": "df['total_charges_sqrt'] = np.sqrt(df['total_charges'].clip(lower=0))",
+      "formula": "sqrt(x) for x >= 0",
+      "transformation_type": "sqrt",
+      "importance_score": 0.12436467302642691
     },
     {
       "name": "monthly_charges_times_avg_monthly_usage_gb",
@@ -522,7 +510,7 @@
       "python_code": "df['monthly_charges_times_avg_monthly_usage_gb'] = df['monthly_charges'] * df['avg_monthly_usage_gb']",
       "formula": "f(x,y) = x * y",
       "transformation_type": "interaction",
-      "importance_score": 0.12316495102897511
+      "importance_score": 0.12310051121718595
     },
     {
       "name": "avg_monthly_usage_gb_times_peak_monthly_usage_gb",
@@ -535,7 +523,7 @@
       "python_code": "df['avg_monthly_usage_gb_times_peak_monthly_usage_gb'] = df['avg_monthly_usage_gb'] * df['peak_monthly_usage_gb']",
       "formula": "f(x,y) = x * y",
       "transformation_type": "interaction",
-      "importance_score": 0.12158596121899637
+      "importance_score": 0.12099699552093496
     },
     {
       "name": "account_age_days_cos",
@@ -547,19 +535,7 @@
       "python_code": "df['account_age_days_cos'] = np.cos(df['account_age_days'])",
       "formula": "cos(x)",
       "transformation_type": "trigonometric",
-      "importance_score": 0.11750013981538263
-    },
-    {
-      "name": "contract_type_is_Two_year",
-      "type": "categorical",
-      "source_columns": [
-        "contract_type"
-      ],
-      "description": "Binary indicator for contract_type==Two year",
-      "python_code": "df['contract_type_is_Two_year'] = (df['contract_type'] == 'Two year').astype(int)",
-      "formula": "1 if value matches, 0 otherwise",
-      "transformation_type": "one_hot",
-      "importance_score": 0.11625343317492427
+      "importance_score": 0.1170195706430078
     },
     {
       "name": "account_age_days_times_avg_monthly_usage_gb",
@@ -572,7 +548,19 @@
       "python_code": "df['account_age_days_times_avg_monthly_usage_gb'] = df['account_age_days'] * df['avg_monthly_usage_gb']",
       "formula": "f(x,y) = x * y",
       "transformation_type": "interaction",
-      "importance_score": 0.11623166163716117
+      "importance_score": 0.11626909575495517
+    },
+    {
+      "name": "contract_type_is_Two_year",
+      "type": "categorical",
+      "source_columns": [
+        "contract_type"
+      ],
+      "description": "Binary indicator for contract_type==Two year",
+      "python_code": "df['contract_type_is_Two_year'] = (df['contract_type'] == 'Two year').astype(int)",
+      "formula": "1 if value matches, 0 otherwise",
+      "transformation_type": "one_hot",
+      "importance_score": 0.11612817848330491
     },
     {
       "name": "monthly_charges_over_peak_monthly_usage_gb",
@@ -585,7 +573,7 @@
       "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['peak_monthly_usage_gb']) > 1e-08\ndf['monthly_charges_over_peak_monthly_usage_gb'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'monthly_charges_over_peak_monthly_usage_gb'] = df.loc[mask, 'monthly_charges'] / df.loc[mask, 'peak_monthly_usage_gb']",
       "formula": "f(x,y) = x / y (safe division)",
       "transformation_type": "interaction",
-      "importance_score": 0.11611187065733783
+      "importance_score": 0.11571777504564382
     },
     {
       "name": "avg_monthly_usage_gb_cos",
@@ -597,7 +585,7 @@
       "python_code": "df['avg_monthly_usage_gb_cos'] = np.cos(df['avg_monthly_usage_gb'])",
       "formula": "cos(x)",
       "transformation_type": "trigonometric",
-      "importance_score": 0.11371571089056151
+      "importance_score": 0.11381545557948762
     },
     {
       "name": "peak_monthly_usage_gb_over_last_interaction_days",
@@ -610,7 +598,43 @@
       "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['last_interaction_days']) > 1e-08\ndf['peak_monthly_usage_gb_over_last_interaction_days'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'peak_monthly_usage_gb_over_last_interaction_days'] = df.loc[mask, 'peak_monthly_usage_gb'] / df.loc[mask, 'last_interaction_days']",
       "formula": "f(x,y) = x / y (safe division)",
       "transformation_type": "interaction",
-      "importance_score": 0.1127900062796403
+      "importance_score": 0.11316640359142728
+    },
+    {
+      "name": "signup_date_month_sin",
+      "type": "temporal",
+      "source_columns": [
+        "signup_date"
+      ],
+      "description": "month_sin component of signup_date",
+      "python_code": "df['signup_date_month_sin'] = np.sin(2 * np.pi * pd.to_datetime(df['signup_date']).dt.month / 12)",
+      "formula": "sin(2π * month / 12)",
+      "transformation_type": "temporal_cyclical",
+      "importance_score": 0.11233278389194618
+    },
+    {
+      "name": "signup_date_day",
+      "type": "engineered",
+      "source_columns": [
+        "signup_date"
+      ],
+      "description": "day component of signup_date",
+      "python_code": "df['signup_date_day'] = pd.to_datetime(df['signup_date']).dt.day",
+      "formula": "Extract day of month (1-31)",
+      "transformation_type": "temporal_component",
+      "importance_score": 0.11199019001210524
+    },
+    {
+      "name": "signup_date_day_cos",
+      "type": "temporal",
+      "source_columns": [
+        "signup_date"
+      ],
+      "description": "day_cos component of signup_date",
+      "python_code": "df['signup_date_day_cos'] = np.cos(2 * np.pi * pd.to_datetime(df['signup_date']).dt.day / 31)",
+      "formula": "cos(2π * day / 31)",
+      "transformation_type": "temporal_cyclical",
+      "importance_score": 0.11185833472772168
     },
     {
       "name": "avg_monthly_usage_gb_sin",
@@ -622,7 +646,7 @@
       "python_code": "df['avg_monthly_usage_gb_sin'] = np.sin(df['avg_monthly_usage_gb'])",
       "formula": "sin(x)",
       "transformation_type": "trigonometric",
-      "importance_score": 0.10897601430839085
+      "importance_score": 0.10959077162948451
     },
     {
       "name": "account_age_days_over_last_interaction_days",
@@ -635,19 +659,7 @@
       "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['last_interaction_days']) > 1e-08\ndf['account_age_days_over_last_interaction_days'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'account_age_days_over_last_interaction_days'] = df.loc[mask, 'account_age_days'] / df.loc[mask, 'last_interaction_days']",
       "formula": "f(x,y) = x / y (safe division)",
       "transformation_type": "interaction",
-      "importance_score": 0.1084832532215313
-    },
-    {
-      "name": "avg_monthly_usage_gb_exp",
-      "type": "mathematical",
-      "source_columns": [
-        "avg_monthly_usage_gb"
-      ],
-      "description": "exp transformation of avg_monthly_usage_gb",
-      "python_code": "df['avg_monthly_usage_gb_exp'] = np.exp(df['avg_monthly_usage_gb'].clip(upper=10.0))",
-      "formula": "exp(x)",
-      "transformation_type": "exponential",
-      "importance_score": 0.10663249060156212
+      "importance_score": 0.10848380438852075
     },
     {
       "name": "avg_monthly_usage_gb_power_3",
@@ -659,7 +671,19 @@
       "python_code": "df['avg_monthly_usage_gb_power_3'] = df['avg_monthly_usage_gb'] ** 3",
       "formula": "f(x) = x^3",
       "transformation_type": "polynomial",
-      "importance_score": 0.10646381841057276
+      "importance_score": 0.1063534905127571
+    },
+    {
+      "name": "avg_monthly_usage_gb_exp",
+      "type": "mathematical",
+      "source_columns": [
+        "avg_monthly_usage_gb"
+      ],
+      "description": "exp transformation of avg_monthly_usage_gb",
+      "python_code": "df['avg_monthly_usage_gb_exp'] = np.exp(df['avg_monthly_usage_gb'].clip(upper=10.0))",
+      "formula": "exp(x)",
+      "transformation_type": "exponential",
+      "importance_score": 0.10619807085109706
     },
     {
       "name": "last_interaction_days_power_2",
@@ -671,7 +695,7 @@
       "python_code": "df['last_interaction_days_power_2'] = df['last_interaction_days'] ** 2",
       "formula": "f(x) = x^2",
       "transformation_type": "polynomial",
-      "importance_score": 0.10477985385785249
+      "importance_score": 0.10474035558864944
     },
     {
       "name": "peak_monthly_usage_gb_times_last_interaction_days",
@@ -684,19 +708,19 @@
       "python_code": "df['peak_monthly_usage_gb_times_last_interaction_days'] = df['peak_monthly_usage_gb'] * df['last_interaction_days']",
       "formula": "f(x,y) = x * y",
       "transformation_type": "interaction",
-      "importance_score": 0.10090615946480293
+      "importance_score": 0.10067127033279781
     },
     {
-      "name": "last_interaction_days_binned",
+      "name": "last_interaction_days_log",
       "type": "mathematical",
       "source_columns": [
         "last_interaction_days"
       ],
-      "description": "last_interaction_days discretized into 10 bins",
-      "python_code": "df['last_interaction_days_binned'] = pd.qcut(df['last_interaction_days'], 10, labels=False, duplicates='drop')",
-      "formula": "Quantile-based binning into 10 bins",
-      "transformation_type": "binned",
-      "importance_score": 0.0997180920114522
+      "description": "log transformation of last_interaction_days",
+      "python_code": "df['last_interaction_days_log'] = np.log(df['last_interaction_days'].clip(lower=1e-8))",
+      "formula": "log(x) for x > 0",
+      "transformation_type": "log",
+      "importance_score": 0.09922724882920451
     },
     {
       "name": "avg_monthly_usage_gb_reciprocal",
@@ -708,19 +732,7 @@
       "python_code": "df['avg_monthly_usage_gb_reciprocal'] = 1.0 / (df['avg_monthly_usage_gb'] + 1e-08)",
       "formula": "1 / (x + ε)",
       "transformation_type": "reciprocal",
-      "importance_score": 0.09920320307592852
-    },
-    {
-      "name": "signup_date_is_weekend",
-      "type": "engineered",
-      "source_columns": [
-        "signup_date"
-      ],
-      "description": "is_weekend component of signup_date",
-      "python_code": "df['signup_date_is_weekend'] = pd.to_datetime(df['signup_date']).dt.dayofweek.isin([5, 6]).astype(int)",
-      "formula": "1 if Saturday/Sunday, 0 otherwise",
-      "transformation_type": "temporal_component",
-      "importance_score": 0.09704333212135421
+      "importance_score": 0.09922476041404221
     },
     {
       "name": "total_charges_times_last_interaction_days",
@@ -733,19 +745,7 @@
       "python_code": "df['total_charges_times_last_interaction_days'] = df['total_charges'] * df['last_interaction_days']",
       "formula": "f(x,y) = x * y",
       "transformation_type": "interaction",
-      "importance_score": 0.09599033694314897
-    },
-    {
-      "name": "signup_date_dayofweek",
-      "type": "engineered",
-      "source_columns": [
-        "signup_date"
-      ],
-      "description": "dayofweek component of signup_date",
-      "python_code": "df['signup_date_dayofweek'] = pd.to_datetime(df['signup_date']).dt.dayofweek",
-      "formula": "Extract day of week (0=Monday)",
-      "transformation_type": "temporal_component",
-      "importance_score": 0.09590918000208383
+      "importance_score": 0.09581365380590565
     },
     {
       "name": "peak_monthly_usage_gb_exp",
@@ -757,7 +757,7 @@
       "python_code": "df['peak_monthly_usage_gb_exp'] = np.exp(df['peak_monthly_usage_gb'].clip(upper=10.0))",
       "formula": "exp(x)",
       "transformation_type": "exponential",
-      "importance_score": 0.09347681364592544
+      "importance_score": 0.09327077286695463
     },
     {
       "name": "payment_method_frequency",
@@ -769,19 +769,7 @@
       "python_code": "freq_map = df['payment_method'].value_counts().to_dict()\ndf['payment_method_frequency'] = df['payment_method'].map(freq_map)",
       "formula": "Count of each category value",
       "transformation_type": "frequency_encoded",
-      "importance_score": 0.09222189017802732
-    },
-    {
-      "name": "signup_date_quarter",
-      "type": "engineered",
-      "source_columns": [
-        "signup_date"
-      ],
-      "description": "quarter component of signup_date",
-      "python_code": "df['signup_date_quarter'] = pd.to_datetime(df['signup_date']).dt.quarter",
-      "formula": "Extract quarter (1-4)",
-      "transformation_type": "temporal_component",
-      "importance_score": 0.09050423225529923
+      "importance_score": 0.09288842903201844
     },
     {
       "name": "payment_method_is_Bank_transfer",
@@ -793,7 +781,7 @@
       "python_code": "df['payment_method_is_Bank_transfer'] = (df['payment_method'] == 'Bank transfer').astype(int)",
       "formula": "1 if value matches, 0 otherwise",
       "transformation_type": "one_hot",
-      "importance_score": 0.09008226055863539
+      "importance_score": 0.08992786530469606
     },
     {
       "name": "last_interaction_days_reciprocal",
@@ -805,7 +793,7 @@
       "python_code": "df['last_interaction_days_reciprocal'] = 1.0 / (df['last_interaction_days'] + 1e-08)",
       "formula": "1 / (x + ε)",
       "transformation_type": "reciprocal",
-      "importance_score": 0.08963820314142168
+      "importance_score": 0.08982976426206758
     },
     {
       "name": "last_interaction_days_sin",
@@ -817,7 +805,7 @@
       "python_code": "df['last_interaction_days_sin'] = np.sin(df['last_interaction_days'])",
       "formula": "sin(x)",
       "transformation_type": "trigonometric",
-      "importance_score": 0.0889517984577425
+      "importance_score": 0.08930168171609079
     },
     {
       "name": "monthly_charges_cos",
@@ -829,7 +817,31 @@
       "python_code": "df['monthly_charges_cos'] = np.cos(df['monthly_charges'])",
       "formula": "cos(x)",
       "transformation_type": "trigonometric",
-      "importance_score": 0.08626856694125065
+      "importance_score": 0.08607871948477144
+    },
+    {
+      "name": "signup_date_quarter",
+      "type": "engineered",
+      "source_columns": [
+        "signup_date"
+      ],
+      "description": "quarter component of signup_date",
+      "python_code": "df['signup_date_quarter'] = pd.to_datetime(df['signup_date']).dt.quarter",
+      "formula": "Extract quarter (1-4)",
+      "transformation_type": "temporal_component",
+      "importance_score": 0.08565720290929202
+    },
+    {
+      "name": "signup_date_dayofweek",
+      "type": "engineered",
+      "source_columns": [
+        "signup_date"
+      ],
+      "description": "dayofweek component of signup_date",
+      "python_code": "df['signup_date_dayofweek'] = pd.to_datetime(df['signup_date']).dt.dayofweek",
+      "formula": "Extract day of week (0=Monday)",
+      "transformation_type": "temporal_component",
+      "importance_score": 0.0845096884670191
     },
     {
       "name": "last_interaction_days_power_3",
@@ -841,7 +853,7 @@
       "python_code": "df['last_interaction_days_power_3'] = df['last_interaction_days'] ** 3",
       "formula": "f(x) = x^3",
       "transformation_type": "polynomial",
-      "importance_score": 0.08448961009380351
+      "importance_score": 0.08438686631519218
     },
     {
       "name": "payment_method_is_Mailed_check",
@@ -853,19 +865,7 @@
       "python_code": "df['payment_method_is_Mailed_check'] = (df['payment_method'] == 'Mailed check').astype(int)",
       "formula": "1 if value matches, 0 otherwise",
       "transformation_type": "one_hot",
-      "importance_score": 0.08377020613084495
-    },
-    {
-      "name": "signup_date_day_sin",
-      "type": "temporal",
-      "source_columns": [
-        "signup_date"
-      ],
-      "description": "day_sin component of signup_date",
-      "python_code": "df['signup_date_day_sin'] = np.sin(2 * np.pi * pd.to_datetime(df['signup_date']).dt.day / 31)",
-      "formula": "sin(2π * day / 31)",
-      "transformation_type": "temporal_cyclical",
-      "importance_score": 0.08264486372925527
+      "importance_score": 0.08374988844534702
     },
     {
       "name": "payment_method_is_Credit_card",
@@ -877,7 +877,7 @@
       "python_code": "df['payment_method_is_Credit_card'] = (df['payment_method'] == 'Credit card').astype(int)",
       "formula": "1 if value matches, 0 otherwise",
       "transformation_type": "one_hot",
-      "importance_score": 0.08228960703330027
+      "importance_score": 0.0820743066085563
     },
     {
       "name": "account_age_days_over_total_charges",
@@ -890,7 +890,19 @@
       "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['total_charges']) > 1e-08\ndf['account_age_days_over_total_charges'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'account_age_days_over_total_charges'] = df.loc[mask, 'account_age_days'] / df.loc[mask, 'total_charges']",
       "formula": "f(x,y) = x / y (safe division)",
       "transformation_type": "interaction",
-      "importance_score": 0.08189607653830316
+      "importance_score": 0.08192441073790317
+    },
+    {
+      "name": "signup_date_is_weekend",
+      "type": "engineered",
+      "source_columns": [
+        "signup_date"
+      ],
+      "description": "is_weekend component of signup_date",
+      "python_code": "df['signup_date_is_weekend'] = pd.to_datetime(df['signup_date']).dt.dayofweek.isin([5, 6]).astype(int)",
+      "formula": "1 if Saturday/Sunday, 0 otherwise",
+      "transformation_type": "temporal_component",
+      "importance_score": 0.07819475983481453
     },
     {
       "name": "monthly_charges_over_avg_monthly_usage_gb",
@@ -903,7 +915,7 @@
       "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['avg_monthly_usage_gb']) > 1e-08\ndf['monthly_charges_over_avg_monthly_usage_gb'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'monthly_charges_over_avg_monthly_usage_gb'] = df.loc[mask, 'monthly_charges'] / df.loc[mask, 'avg_monthly_usage_gb']",
       "formula": "f(x,y) = x / y (safe division)",
       "transformation_type": "interaction",
-      "importance_score": 0.07519218215836342
+      "importance_score": 0.07579701993056516
     },
     {
       "name": "total_charges_over_last_interaction_days",
@@ -916,7 +928,7 @@
       "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['last_interaction_days']) > 1e-08\ndf['total_charges_over_last_interaction_days'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'total_charges_over_last_interaction_days'] = df.loc[mask, 'total_charges'] / df.loc[mask, 'last_interaction_days']",
       "formula": "f(x,y) = x / y (safe division)",
       "transformation_type": "interaction",
-      "importance_score": 0.07399886159195297
+      "importance_score": 0.07417155105349314
     },
     {
       "name": "last_interaction_days_exp",
@@ -928,7 +940,7 @@
       "python_code": "df['last_interaction_days_exp'] = np.exp(df['last_interaction_days'].clip(upper=10.0))",
       "formula": "exp(x)",
       "transformation_type": "exponential",
-      "importance_score": 0.07358828238305151
+      "importance_score": 0.07351677615232653
     },
     {
       "name": "contract_type_is_One_year",
@@ -940,7 +952,7 @@
       "python_code": "df['contract_type_is_One_year'] = (df['contract_type'] == 'One year').astype(int)",
       "formula": "1 if value matches, 0 otherwise",
       "transformation_type": "one_hot",
-      "importance_score": 0.0722779077112223
+      "importance_score": 0.07265671184862231
     },
     {
       "name": "last_interaction_days_cos",
@@ -952,19 +964,19 @@
       "python_code": "df['last_interaction_days_cos'] = np.cos(df['last_interaction_days'])",
       "formula": "cos(x)",
       "transformation_type": "trigonometric",
-      "importance_score": 0.06896863581770549
+      "importance_score": 0.06947201195427793
     },
     {
-      "name": "signup_date_day",
-      "type": "engineered",
+      "name": "signup_date_day_sin",
+      "type": "temporal",
       "source_columns": [
         "signup_date"
       ],
-      "description": "day component of signup_date",
-      "python_code": "df['signup_date_day'] = pd.to_datetime(df['signup_date']).dt.day",
-      "formula": "Extract day of month (1-31)",
-      "transformation_type": "temporal_component",
-      "importance_score": 0.06625893945876392
+      "description": "day_sin component of signup_date",
+      "python_code": "df['signup_date_day_sin'] = np.sin(2 * np.pi * pd.to_datetime(df['signup_date']).dt.day / 31)",
+      "formula": "sin(2π * day / 31)",
+      "transformation_type": "temporal_cyclical",
+      "importance_score": 0.06790186514049823
     },
     {
       "name": "peak_monthly_usage_gb_sin",
@@ -976,20 +988,31 @@
       "python_code": "df['peak_monthly_usage_gb_sin'] = np.sin(df['peak_monthly_usage_gb'])",
       "formula": "sin(x)",
       "transformation_type": "trigonometric",
-      "importance_score": 0.06546961400040725
+      "importance_score": 0.06560192288580005
     },
     {
-      "name": "total_charges_over_avg_monthly_usage_gb",
-      "type": "interaction",
+      "name": "peak_monthly_usage_gb_cos",
+      "type": "mathematical",
       "source_columns": [
-        "total_charges",
-        "avg_monthly_usage_gb"
+        "peak_monthly_usage_gb"
       ],
-      "description": "Divide interaction between total_charges and avg_monthly_usage_gb",
-      "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['avg_monthly_usage_gb']) > 1e-08\ndf['total_charges_over_avg_monthly_usage_gb'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'total_charges_over_avg_monthly_usage_gb'] = df.loc[mask, 'total_charges'] / df.loc[mask, 'avg_monthly_usage_gb']",
-      "formula": "f(x,y) = x / y (safe division)",
-      "transformation_type": "interaction",
-      "importance_score": 0.06516146329022128
+      "description": "cos transformation of peak_monthly_usage_gb",
+      "python_code": "df['peak_monthly_usage_gb_cos'] = np.cos(df['peak_monthly_usage_gb'])",
+      "formula": "cos(x)",
+      "transformation_type": "trigonometric",
+      "importance_score": 0.06539331392598689
+    },
+    {
+      "name": "total_charges_cos",
+      "type": "mathematical",
+      "source_columns": [
+        "total_charges"
+      ],
+      "description": "cos transformation of total_charges",
+      "python_code": "df['total_charges_cos'] = np.cos(df['total_charges'])",
+      "formula": "cos(x)",
+      "transformation_type": "trigonometric",
+      "importance_score": 0.0653914890310098
     },
     {
       "name": "avg_monthly_usage_gb_over_peak_monthly_usage_gb",
@@ -1002,43 +1025,20 @@
       "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['peak_monthly_usage_gb']) > 1e-08\ndf['avg_monthly_usage_gb_over_peak_monthly_usage_gb'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'avg_monthly_usage_gb_over_peak_monthly_usage_gb'] = df.loc[mask, 'avg_monthly_usage_gb'] / df.loc[mask, 'peak_monthly_usage_gb']",
       "formula": "f(x,y) = x / y (safe division)",
       "transformation_type": "interaction",
-      "importance_score": 0.06515308111067465
+      "importance_score": 0.06517021722632867
     },
     {
-      "name": "total_charges_cos",
-      "type": "mathematical",
+      "name": "total_charges_over_avg_monthly_usage_gb",
+      "type": "interaction",
       "source_columns": [
-        "total_charges"
+        "total_charges",
+        "avg_monthly_usage_gb"
       ],
-      "description": "cos transformation of total_charges",
-      "python_code": "df['total_charges_cos'] = np.cos(df['total_charges'])",
-      "formula": "cos(x)",
-      "transformation_type": "trigonometric",
-      "importance_score": 0.06510324054356792
-    },
-    {
-      "name": "peak_monthly_usage_gb_cos",
-      "type": "mathematical",
-      "source_columns": [
-        "peak_monthly_usage_gb"
-      ],
-      "description": "cos transformation of peak_monthly_usage_gb",
-      "python_code": "df['peak_monthly_usage_gb_cos'] = np.cos(df['peak_monthly_usage_gb'])",
-      "formula": "cos(x)",
-      "transformation_type": "trigonometric",
-      "importance_score": 0.06494171485661504
-    },
-    {
-      "name": "signup_date_day_cos",
-      "type": "temporal",
-      "source_columns": [
-        "signup_date"
-      ],
-      "description": "day_cos component of signup_date",
-      "python_code": "df['signup_date_day_cos'] = np.cos(2 * np.pi * pd.to_datetime(df['signup_date']).dt.day / 31)",
-      "formula": "cos(2π * day / 31)",
-      "transformation_type": "temporal_cyclical",
-      "importance_score": 0.06462954504689192
+      "description": "Divide interaction between total_charges and avg_monthly_usage_gb",
+      "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['avg_monthly_usage_gb']) > 1e-08\ndf['total_charges_over_avg_monthly_usage_gb'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'total_charges_over_avg_monthly_usage_gb'] = df.loc[mask, 'total_charges'] / df.loc[mask, 'avg_monthly_usage_gb']",
+      "formula": "f(x,y) = x / y (safe division)",
+      "transformation_type": "interaction",
+      "importance_score": 0.0644672782202198
     },
     {
       "name": "monthly_charges_over_last_interaction_days",
@@ -1051,7 +1051,7 @@
       "python_code": "# Safe division to avoid explosion from small denominators\nmask = np.abs(df['last_interaction_days']) > 1e-08\ndf['monthly_charges_over_last_interaction_days'] = 0.0  # Initialize with zeros\ndf.loc[mask, 'monthly_charges_over_last_interaction_days'] = df.loc[mask, 'monthly_charges'] / df.loc[mask, 'last_interaction_days']",
       "formula": "f(x,y) = x / y (safe division)",
       "transformation_type": "interaction",
-      "importance_score": 0.06447229068692434
+      "importance_score": 0.06405497712328441
     },
     {
       "name": "avg_monthly_usage_gb_times_last_interaction_days",
@@ -1064,7 +1064,7 @@
       "python_code": "df['avg_monthly_usage_gb_times_last_interaction_days'] = df['avg_monthly_usage_gb'] * df['last_interaction_days']",
       "formula": "f(x,y) = x * y",
       "transformation_type": "interaction",
-      "importance_score": 0.06441090019435637
+      "importance_score": 0.06405254310251969
     },
     {
       "name": "monthly_charges_times_last_interaction_days",
@@ -1077,7 +1077,7 @@
       "python_code": "df['monthly_charges_times_last_interaction_days'] = df['monthly_charges'] * df['last_interaction_days']",
       "formula": "f(x,y) = x * y",
       "transformation_type": "interaction",
-      "importance_score": 0.06397504444938172
+      "importance_score": 0.0639760074793264
     }
   ],
   "instructions": {
